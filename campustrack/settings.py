@@ -3,14 +3,10 @@ from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-SECRET_KEY = 'django-insecure-campustrack-dev-key'  # change before production
-DEBUG = False   # IMPORTANT for Render deployment
-
+SECRET_KEY = 'django-insecure-campustrack-dev-key'
+DEBUG = False
 ALLOWED_HOSTS = ['*']
 
-# -----------------------------
-# INSTALLED APPS
-# -----------------------------
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -18,24 +14,14 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-
-    # Third-party
     'crispy_forms',
     'crispy_bootstrap5',
-
-    # Local apps
     'core',
 ]
 
-# -----------------------------
-# MIDDLEWARE
-# -----------------------------
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
-
-    # REQUIRED for Render static files
-    'whitenoise.middleware.WhiteNoiseMiddleware',
-
+    'whitenoise.middleware.WhiteNoiseMiddleware',      # ✔ RIGHT POSITION!
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -46,9 +32,6 @@ MIDDLEWARE = [
 
 ROOT_URLCONF = 'campustrack.urls'
 
-# -----------------------------
-# TEMPLATES
-# -----------------------------
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
@@ -66,86 +49,55 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'campustrack.wsgi.application'
+ASGI_APPLICATION = 'campustrack.asgi.application'
 
-# -----------------------------
-# DATABASE
-# -----------------------------
+
+# ===========================
+# DATABASE — required for Render disk
+# ===========================
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'NAME': '/var/data/db.sqlite3',   # ✔ persistent storage on Render
     }
 }
 
-# -----------------------------
-# PASSWORD VALIDATION
-# -----------------------------
-AUTH_PASSWORD_VALIDATORS = [
-    {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
-    {'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator'},
-    {'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator'},
-    {'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator'},
-]
 
-# -----------------------------
-# INTERNATIONALIZATION
-# -----------------------------
-LANGUAGE_CODE = 'en-us'
-TIME_ZONE = 'Asia/Kolkata'
-USE_I18N = True
-USE_TZ = True
-
-# -----------------------------
-# STATIC FILES (VERY IMPORTANT)
-# -----------------------------
+# ===========================
+# STATIC FILES — CRITICAL
+# ===========================
 STATIC_URL = '/static/'
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')  # ✔ collectstatic output
 
-STATICFILES_DIRS = [BASE_DIR / 'static']
-
-STATIC_ROOT = BASE_DIR / 'staticfiles'
+STATICFILES_DIRS = [
+    os.path.join(BASE_DIR, 'static'),   # ✔ your custom static folder
+]
 
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
-# -----------------------------
+
+# ===========================
 # MEDIA FILES
-# -----------------------------
+# ===========================
 MEDIA_URL = '/media/'
-MEDIA_ROOT = BASE_DIR / 'media'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
-# -----------------------------
-# AUTH MODEL & LOGIN
-# -----------------------------
+
+# ===========================
+# EMAIL — Turn OFF SMTP for now to avoid 500 errors
+# ===========================
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+
+
+# ===========================
+# AUTH
+# ===========================
 AUTH_USER_MODEL = 'core.User'
-
 LOGIN_URL = 'login'
 LOGIN_REDIRECT_URL = 'dashboard'
 LOGOUT_REDIRECT_URL = 'login'
 
-AUTHENTICATION_BACKENDS = [
-    'core.backends.EmailOrUsernameModelBackend',
-    'django.contrib.auth.backends.ModelBackend',
-]
-
-# -----------------------------
-# CRISPY FORMS
-# -----------------------------
 CRISPY_ALLOWED_TEMPLATE_PACKS = 'bootstrap5'
 CRISPY_TEMPLATE_PACK = 'bootstrap5'
 
-# -----------------------------
-# EMAIL CONFIG (Working Gmail)
-# -----------------------------
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = 'smtp.gmail.com'
-EMAIL_PORT = 587
-EMAIL_USE_TLS = True
-
-EMAIL_HOST_USER = 'vedant1505123@gmail.com'
-EMAIL_HOST_PASSWORD = 'cwtq itwd czuu bpus'  # App Password only
-
-DEFAULT_FROM_EMAIL = 'CampusTrack <no-reply@campustrack.com>'
-
-# -----------------------------
-# AUTO FIELD
-# -----------------------------
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
