@@ -1,0 +1,47 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="max-w-xl mx-auto bg-white p-4 rounded shadow">
+
+  <h3 class="fw-bold mb-3">Student Availability Checker</h3>
+  <p class="text-muted small">Upload an Excel file with a list of students to check if they exist.</p>
+
+  <form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    <div class="mb-3">
+      <label class="form-label">Upload Excel File</label>
+      <input type="file" name="file" accept=".xlsx" class="form-control" required>
+    </div>
+
+    <button class="btn btn-primary">Check Availability</button>
+  </form>
+
+  {% if results %}
+  <hr>
+  <h5>Check Results</h5>
+  <table class="table table-striped mt-2">
+    <thead>
+      <tr>
+        <th>Student ID</th>
+        <th>Name</th>
+        <th>Status</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for r in results %}
+      <tr>
+        <td>{{ r.student_id }}</td>
+        <td>{{ r.name }}</td>
+        <td>
+          {% if r.exists %}
+            <span class="badge bg-success">✔ Exists</span>
+          {% else %}
+            <span class="badge bg-danger">✖ Not Found</span>
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% endif %}
+</div>
+{% endblock %}

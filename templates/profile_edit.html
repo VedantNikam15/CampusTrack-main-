@@ -1,0 +1,68 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+
+{% block title %}Edit Profile - CampusTrack{% endblock %}
+
+{% block content %}
+<div class="container">
+  <h2 class="mb-3">Edit Profile</h2>
+  <div class="row">
+    <div class="col-lg-8">
+      <div class="card shadow-sm mb-4">
+        <div class="card-header bg-primary text-white">Account</div>
+        <div class="card-body">
+          <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+
+            <h5 class="mb-3">User Details</h5>
+            {{ user_form|crispy }}
+
+            <hr>
+
+            {% if student_form %}
+              <h5 class="mb-3">Student Profile</h5>
+              {{ student_form|crispy }}
+            {% elif teacher_form %}
+              <h5 class="mb-3">Teacher Profile</h5>
+              {{ teacher_form|crispy }}
+            {% endif %}
+
+            <div class="d-flex justify-content-between mt-3">
+              <a href="{% url 'core:view_profile' request.user.pk %}" class="btn btn-outline-secondary">Cancel</a>
+              <button type="submit" class="btn btn-primary">Save Changes</button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      {# JS to toggle 'Other' department input in the edit profile form #}
+      <script>
+        (function(){
+          const deptSel = document.getElementById('id_department');
+          const otherInput = document.getElementById('id_other_department');
+          if (!deptSel || !otherInput) return;
+          function update(){
+            if (deptSel.value === '__other__'){
+              otherInput.style.display = '';
+              otherInput.required = true;
+            } else {
+              otherInput.style.display = 'none';
+              otherInput.required = false;
+              // don't clobber existing server-side prefill unless user changes
+            }
+          }
+          // initial
+          update();
+          deptSel.addEventListener('change', update);
+        })();
+      </script>
+
+      <div class="card shadow-sm">
+        <div class="card-body">
+          <a class="btn btn-outline-dark" href="{% url 'core:password_change' %}">Change Password</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

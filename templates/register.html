@@ -1,0 +1,113 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<div class="min-h-screen flex items-center justify-center py-8 px-4 bg-gray-100">
+
+  <div class="card shadow-lg" style="max-width: 520px; width:100%; border-radius:16px;">
+    <div class="card-body p-5">
+
+      <!-- Branding -->
+      <div class="text-center mb-4">
+        <h2 class="fw-bold mb-1">Create Your Account</h2>
+        <p class="text-muted small">Join CampusTrack and get started</p>
+      </div>
+
+      <!-- Form -->
+      <form method="post" novalidate>
+        {% csrf_token %}
+
+        {% if form.non_field_errors %}
+          <div class="alert alert-danger mb-3">
+            {% for err in form.non_field_errors %}
+              <div>{{ err }}</div>
+            {% endfor %}
+          </div>
+        {% endif %}
+
+        <!-- Form fields (rendered with explicit error display) -->
+        <div class="space-y-3 mb-3">
+          {% for field in form.visible_fields %}
+            <div class="mb-3">
+              {% if field.label %}
+                <label for="{{ field.auto_id }}" class="form-label">{{ field.label }}</label>
+              {% endif %}
+
+              {{ field }}
+
+              {% if field.errors %}
+                <div class="invalid-feedback d-block">
+                  {% for err in field.errors %}
+                    <div>{{ err }}</div>
+                  {% endfor %}
+                </div>
+              {% endif %}
+
+              {% if field.help_text %}
+                <div class="form-text text-muted">{{ field.help_text }}</div>
+              {% endif %}
+            </div>
+          {% endfor %}
+        </div>
+
+        <!-- Username availability feedback -->
+        <div id="username-feedback" class="small username-feedback"></div>
+
+        <!-- Submit Button -->
+        <button class="btn btn-primary btn-lg w-100 mt-3" type="submit">
+          <i class="bi bi-person-plus me-1"></i>
+          Register
+        </button>
+
+        <div class="text-center mt-3">
+          <span class="small text-muted">Already have an account?</span>
+          <a href="{% url 'login' %}" class="small text-primary ms-1">Login</a>
+        </div>
+      </form>
+
+    </div>
+  </div>
+
+</div>
+
+<!-- Username checker script -->
+<script>
+(function(){
+  const input = document.getElementById('id_username');
+  if(!input) return;
+
+  const feedback = document.getElementById('username-feedback');
+  let timer = null;
+
+  function show(msg, ok){
+    feedback.textContent = msg;
+    feedback.classList.toggle('valid', !!ok);
+    feedback.classList.toggle('invalid', !ok);
+  }
+
+  input.addEventListener('input', function(){
+    clearTimeout(timer);
+    const val = input.value.trim();
+    if(!val){
+      feedback.textContent = '';
+      feedback.className = 'small username-feedback';
+      return;
+    }
+
+    timer = setTimeout(()=>{
+      const url = "{% url 'core:check_username' %}?username=" + encodeURIComponent(val);
+      fetch(url, {credentials:'same-origin'})
+        .then(r => r.json())
+        .then(data => {
+          show(data.message, data.available);
+        })
+        .catch(() => {
+          feedback.textContent='Could not verify username';
+          feedback.classList.add('invalid');
+        });
+    }, 300);
+  });
+
+})();
+</script>
+
+{% endblock %}

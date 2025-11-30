@@ -1,0 +1,1 @@
+web: gunicorn campustrack.wsgi:application --log-file -

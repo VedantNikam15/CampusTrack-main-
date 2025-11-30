@@ -1,0 +1,68 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+<div class="d-flex align-items-center justify-content-center" style="min-height:70vh;">
+  <div class="card shadow-sm login-card">
+    <div class="card-body p-4">
+      <div class="text-center mb-3">
+        <a href="{% url 'home' %}" class="d-inline-block mb-2 login-brand" aria-label="CampusTrack home">
+          <img src="{% static 'images/logo.png' %}" alt="CampusTrack" onerror="this.style.display='none'">
+        </a>
+        <h3 class="mb-1">Welcome back</h3>
+        <p class="text-muted small mb-0">Sign in to continue to CampusTrack</p>
+      </div>
+
+      <form method="post" novalidate>
+        {% csrf_token %}
+        {% if form.non_field_errors %}
+          <div class="alert alert-danger">
+            {% for err in form.non_field_errors %}<div>{{ err }}</div>{% endfor %}
+          </div>
+        {% endif %}
+
+        <div class="mb-3">
+          <label for="id_username" class="form-label">Email or username</label>
+          <div class="input-group">
+            <div class="input-group-prepend"><span class="input-group-text bg-white" style="border-right:0;"><i class="bi bi-envelope"></i></span></div>
+            <input id="id_username" name="username" class="form-control" type="text" value="{{ form.username.value|default:'' }}" placeholder="Email or username" required>
+          </div>
+          <div class="login-helper">You can sign in with either your college email or your chosen username.</div>
+          {% if form.username.errors %}
+            <small class="text-danger mt-1 d-block">{% for e in form.username.errors %}{{ e }}{% endfor %}</small>
+          {% endif %}
+        </div>
+
+        <div class="mb-3">
+          <label for="id_password" class="form-label">Password</label>
+          <div class="input-group password-toggle">
+            <div class="input-group-prepend"><span class="input-group-text bg-white" style="border-right:0;"><i class="bi bi-lock"></i></span></div>
+            <input id="id_password" name="password" class="form-control" type="password" placeholder="Your password" required>
+          </div>
+          {% if form.password.errors %}
+            <small class="text-danger mt-1 d-block">{% for e in form.password.errors %}{{ e }}{% endfor %}</small>
+          {% endif %}
+        </div>
+
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <div class="form-check">
+            <input class="form-check-input" type="checkbox" name="remember" id="id_remember">
+            <label class="form-check-label small" for="id_remember">Remember me</label>
+          </div>
+          <div>
+            <a href="{% url 'password_reset' %}" class="small">Forgot password?</a>
+          </div>
+        </div>
+
+        <div class="d-grid">
+          <button class="btn btn-primary btn-lg mb-2" type="submit">Sign in</button>
+        </div>
+
+        <div class="text-center mt-3">
+          <span class="small text-muted">Don't have an account?</span>
+          <a href="{% url 'register' %}" class="ms-2">Register</a>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

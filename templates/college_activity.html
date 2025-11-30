@@ -1,0 +1,272 @@
+{% extends 'base.html' %}
+
+{% block title %}College Activity - CampusTrack{% endblock %}
+
+{% block content %}
+<div class="container">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h2 class="mb-0">College Activity</h2>
+    <div class="text-muted">Campus-wide updates and achievements</div>
+  </div>
+
+  <!-- Summary cards -->
+  <div class="row g-3 mb-4">
+    <div class="col-md-4">
+      <div class="card shadow-sm h-100">
+        <div class="card-body d-flex justify-content-between align-items-center">
+          <div>
+            <div class="text-muted">Upcoming Events</div>
+            <div class="display-6">{{ events|length }}</div>
+          </div>
+          <span class="badge bg-primary">📅</span>
+        </div>
+      </div>
+    </div>
+    <!-- Removed Verified Certificates and Marks Entries summary cards per user request -->
+  </div>
+
+  <!-- Tabs -->
+  <ul class="nav nav-tabs" id="activityTabs" role="tablist">
+    <li class="nav-item" role="presentation">
+      <button class="nav-link active" id="events-tab" data-toggle="tab" data-target="#events" type="button" role="tab">Events</button>
+    </li>
+    <li class="nav-item" role="presentation">
+      <button class="nav-link" id="certs-tab" data-toggle="tab" data-target="#certs" type="button" role="tab">Certificates</button>
+    </li>
+    <li class="nav-item" role="presentation">
+      <button class="nav-link" id="marks-tab" data-toggle="tab" data-target="#marks" type="button" role="tab">Marks</button>
+    </li>
+  </ul>
+
+  <div class="tab-content pt-3" id="activityTabsContent">
+    <!-- Events Tab -->
+    <div class="tab-pane fade show active" id="events" role="tabpanel" aria-labelledby="events-tab">
+      <div class="card shadow-sm">
+        <div class="card-body">
+          <div class="row g-2 mb-3">
+            <div class="col-md-6">
+              <input id="eventSearch" class="form-control" placeholder="Search events by title, description, department...">
+            </div>
+            <div class="col-md-3">
+              <select id="eventScope" class="form-control">
+                <option value="">All scopes</option>
+                <option value="college">College</option>
+                <option value="department">Department</option>
+              </select>
+            </div>
+            <div class="col-md-3">
+              <input id="eventDept" class="form-control" placeholder="Filter by department (e.g. CSE)">
+            </div>
+          </div>
+
+          {% if events %}
+          <div class="table-responsive">
+            <table class="table table-hover align-middle" id="eventsTable">
+              <thead class="thead-light">
+                <tr>
+                  <th>Title</th>
+                  <th>Scope</th>
+                  <th>Department</th>
+                  <th>Starts</th>
+                  <th>Ends</th>
+                  <th>Status</th>
+                  <th>Created By</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for e in events %}
+                <tr data-scope="{{ e.scope }}" data-dept="{{ e.department|default:'' }}">
+                  <td>
+                    <div class="fw-bold">{{ e.title }}</div>
+                    <small class="text-muted">{{ e.description|default:''|truncatechars:120 }}</small>
+                    {% if e.registration_link and e.registration_open %}
+                      <div class="mt-2">
+                        <a class="btn btn-sm btn-outline-success" href="{{ e.registration_link }}" target="_blank" rel="noopener">Register</a>
+                      </div>
+                    {% elif e.registration_link and not e.registration_open %}
+                      <div class="mt-2">
+                        <button class="btn btn-sm btn-outline-secondary" disabled title="Registration closed">Registration closed</button>
+                      </div>
+                    {% endif %}
+                  </td>
+                  <td>
+                    <span class="badge bg-{% if e.scope == 'college' %}primary{% else %}info{% endif %}">{{ e.get_scope_display }}</span>
+                  </td>
+                  <td>{{ e.department|default:'—' }}</td>
+                  <td>
+                    {{ e.date_from|date:"M d, Y H:i" }}
+                    <div><small class="text-muted">{{ e.date_from|timesince }} ago</small></div>
+                  </td>
+                  <td>{{ e.date_to|date:"M d, Y H:i" }}</td>
+                  <td>
+                    <span class="badge bg-{{ e.status_color }}">{{ e.status|title }}</span>
+                  </td>
+                  <td>{{ e.created_by.get_full_name|default:e.created_by }}</td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+          {% else %}
+            <div class="text-center text-muted py-4">
+              <i class="fas fa-calendar-check fa-2x mb-2"></i>
+              <div>No events to show</div>
+            </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Certificates Tab -->
+    <div class="tab-pane fade" id="certs" role="tabpanel" aria-labelledby="certs-tab">
+      <div class="card shadow-sm">
+        <div class="card-body">
+          <div class="row g-2 mb-3">
+            <div class="col-md-6">
+              <input id="certSearch" class="form-control" placeholder="Search certificates by title or student">
+            </div>
+          </div>
+
+          {% if certs %}
+          <div class="table-responsive">
+            <table class="table table-striped align-middle" id="certsTable">
+              <thead class="thead-light">
+                <tr>
+                  <th>Title</th>
+                  <th>Student</th>
+                  <th>Uploaded</th>
+                  <th>Verified By</th>
+                  <th>File</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for c in certs %}
+                <tr>
+                  <td>{{ c.title }}</td>
+                  <td>
+                    <a href="{% url 'core:view_profile' c.student.pk %}">{{ c.student.get_full_name|default:c.student.email }}</a>
+                  </td>
+                  <td>{{ c.uploaded_at|date:"M d, Y H:i" }}</td>
+                  <td>{{ c.verified_by.get_full_name|default:c.verified_by.email }}</td>
+                  <td>
+                    {% if c.file %}
+                      <a class="btn btn-sm btn-outline-primary" href="{{ c.file.url }}" target="_blank">View</a>
+                    {% else %}
+                      <span class="text-muted">—</span>
+                    {% endif %}
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+          {% else %}
+            <div class="text-center text-muted py-4">
+              <i class="fas fa-file-alt fa-2x mb-2"></i>
+              <div>No verified certificates yet</div>
+            </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Marks Tab -->
+    <div class="tab-pane fade" id="marks" role="tabpanel" aria-labelledby="marks-tab">
+      <div class="card shadow-sm">
+        <div class="card-body">
+          <div class="row g-2 mb-3">
+            <div class="col-md-6">
+              <input id="marksSearch" class="form-control" placeholder="Search marks by student or subject">
+            </div>
+          </div>
+
+          {% if marks %}
+          <div class="table-responsive">
+            <table class="table table-hover align-middle" id="marksTable">
+              <thead class="thead-light">
+                <tr>
+                  <th>Student</th>
+                  <th>Subject</th>
+                  <th>Marks</th>
+                  <th>Total</th>
+                  <th>%</th>
+                  <th>Date</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for m in marks %}
+                <tr>
+                  <td>
+                    <a href="{% url 'core:view_profile' m.student.pk %}">{{ m.student.get_full_name|default:m.student.email }}</a>
+                  </td>
+                  <td>{{ m.subject }}</td>
+                  <td>{{ m.marks_obtained }}</td>
+                  <td>{{ m.total_marks }}</td>
+                  <td>
+                    <span class="badge bg-{% if m.percentage >= 80 %}success{% elif m.percentage >= 60 %}warning{% else %}danger{% endif %}">{{ m.percentage|floatformat:1 }}%</span>
+                  </td>
+                  <td>{{ m.created_at|date:"M d, Y H:i" }}</td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+          {% else %}
+            <div class="text-center text-muted py-4">
+              <i class="fas fa-clipboard-list fa-2x mb-2"></i>
+              <div>No marks to display</div>
+            </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://kit.fontawesome.com/your-fontawesome-kit.js" crossorigin="anonymous"></script>
+<script>
+  // Simple client-side filters for each tab
+  function filterTable(inputEl, tableId) {
+    const q = inputEl.value.toLowerCase();
+    document.querySelectorAll(`#${tableId} tbody tr`).forEach(tr => {
+      const text = tr.innerText.toLowerCase();
+      tr.style.display = text.includes(q) ? '' : 'none';
+    });
+  }
+
+  // Events: search + scope + department
+  const eventSearch = document.getElementById('eventSearch');
+  const eventScope = document.getElementById('eventScope');
+  const eventDept  = document.getElementById('eventDept');
+  const eventsRows = () => Array.from(document.querySelectorAll('#eventsTable tbody tr'));
+
+  function applyEventFilters() {
+    const q = (eventSearch?.value || '').toLowerCase();
+    const scope = (eventScope?.value || '').toLowerCase();
+    const dept = (eventDept?.value || '').toLowerCase();
+    eventsRows().forEach(tr => {
+      const text = tr.innerText.toLowerCase();
+      const rowScope = (tr.getAttribute('data-scope') || '').toLowerCase();
+      const rowDept  = (tr.getAttribute('data-dept') || '').toLowerCase();
+      const matchQ = q ? text.includes(q) : true;
+      const matchScope = scope ? (rowScope === scope) : true;
+      const matchDept = dept ? rowDept.includes(dept) : true;
+      tr.style.display = (matchQ && matchScope && matchDept) ? '' : 'none';
+    });
+  }
+
+  eventSearch?.addEventListener('input', applyEventFilters);
+  eventScope?.addEventListener('change', applyEventFilters);
+  eventDept?.addEventListener('input', applyEventFilters);
+
+  // Certificates search
+  const certSearch = document.getElementById('certSearch');
+  certSearch?.addEventListener('input', () => filterTable(certSearch, 'certsTable'));
+
+  // Marks search
+  const marksSearch = document.getElementById('marksSearch');
+  marksSearch?.addEventListener('input', () => filterTable(marksSearch, 'marksTable'));
+</script>
+{% endblock %}

@@ -1,0 +1,62 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+
+{% block title %}Add Marks - CampusTrack{% endblock %}
+
+{% block content %}
+<div class="container">
+  <div class="row justify-content-center">
+    <div class="col-lg-8 col-md-10">
+      <div class="card shadow-sm mb-3">
+        <div class="card-header bg-primary text-white">
+          <h5 class="mb-0">Add Marks</h5>
+        </div>
+        <div class="card-body">
+          <form method="post">
+            {% csrf_token %}
+            {{ form|crispy }}
+            <div class="d-flex justify-content-between mt-3">
+              <a href="{% url 'dashboard' %}" class="btn btn-outline-secondary">Cancel</a>
+              <button type="submit" class="btn btn-primary">Save</button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <div class="alert alert-info">
+        Tip: Make sure the selected student exists and the total marks reflect the assessment maximum (default 100).
+      </div>
+    </div>
+  </div>
+</div>
+  
+  <!-- Select2 assets and initialization for searchable student dropdown -->
+  <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+  <style>
+    /* Ensure Select2 fills the crispy form control width */
+    .select2-container { width: 100% !important; }
+  </style>
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+  <script>
+    (function() {
+      function initSelect2() {
+        var sel = document.getElementById('id_student');
+        if (!sel) return;
+        // If jQuery/Select2 loaded, enhance the select
+        if (window.jQuery && jQuery.fn.select2) {
+          jQuery(sel).select2({
+            width: '100%',
+            placeholder: 'Select a student',
+            allowClear: true
+          });
+        }
+      }
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initSelect2);
+      } else {
+        initSelect2();
+      }
+    })();
+  </script>
+{% endblock %}

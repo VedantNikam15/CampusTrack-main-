@@ -1,0 +1,45 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.so
+*.egg-info/
+*.log
+
+# Django
+/media/
+/staticfiles/
+staticfiles/
+# If you collect static to /static/, uncomment the next line
+# /static/
+
+# Environments
+.env
+.env.*
+.venv/
+venv/
+ENV/
+
+# IDE / Editor
+.vscode/
+.idea/
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Node (if present)
+node_modules/
+
+# Coverage / test
+.coverage
+htmlcov/
+pytestcache/
+
+# Build / dist
+build/
+dist/
+
+# SQLite (if used)
+db.sqlite3

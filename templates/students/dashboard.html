@@ -1,0 +1,255 @@
+{% extends 'base.html' %}
+{% block body_class %}dashboard-page{% endblock %}
+{% block content %}
+<div class="grid grid-cols-12 gap-4">
+  <!-- LEFT: profile card -->
+  <aside class="col-span-12 md:col-span-3">
+    <div class="bg-white p-4 rounded shadow">
+      <div class="d-flex align-items-center mb-3">
+        <div class="me-3">
+          {% if user.student_profile and user.student_profile.avatar %}
+            <img src="{{ user.student_profile.avatar.url }}" alt="avatar" class="rounded-circle" width="64" height="64">
+          {% else %}
+            <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center" style="width:64px;height:64px;font-weight:700">{{ user.username|slice:":1"|upper }}</div>
+          {% endif %}
+        </div>
+        <div>
+          <h4 class="mb-0">{{ user.get_full_name|default:user.username }}</h4>
+          <div class="text-muted small">{{ user.department }} • Year {{ user.year }}</div>
+          <div class="text-muted small">Student ID: {{ user.student_id }}</div>
+        </div>
+      </div>
+
+      <div class="mt-3">
+        <div class="text-muted">Department Rank</div>
+        <div class="d-flex align-items-center justify-content-between">
+          <div class="h5 mb-0">{{ position|default:'N/A' }}</div>
+          <div class="small text-muted">Top {{ ranks|length }}</div>
+        </div>
+        <div class="progress mt-2" style="height:8px;border-radius:6px">
+          <div class="progress-bar bg-primary" role="progressbar" style="--progress: {{ position|default:0|floatformat:0 }}%"></div>
+        </div>
+      </div>
+
+      <hr class="my-3">
+      <a href="{% url 'core:view_profile' user.pk %}" class="btn btn-outline-secondary btn-sm w-100">View Profile</a>
+    </div>
+  </aside>
+
+  <!-- CENTER: feed -->
+  <main class="col-span-12 md:col-span-6">
+    <div class="mb-4 d-flex gap-2">
+      <a href="{% url 'core:create_post' %}" class="btn btn-outline-primary"><i class="bi bi-plus-circle me-1" aria-hidden="true"></i>Create Post</a>
+      <a href="{% url 'core:upload_certificate' %}" class="btn btn-outline-secondary"><i class="bi bi-upload me-1" aria-hidden="true"></i>Upload Certificate</a>
+    </div>
+
+    {% for post in posts %}
+      {% include 'includes/post_item.html' with post=post %}
+    {% empty %}
+      <div class="bg-white p-4 rounded shadow">No posts yet.</div>
+    {% endfor %}
+  </main>
+
+  <!-- RIGHT: events, top rankers -->
+  <aside class="col-span-12 md:col-span-3">
+    <div class="bg-white p-3 rounded shadow mb-4">
+      <h5 class="mb-3">Upcoming Events</h5>
+      {% for event in events %}
+        <div class="d-flex justify-content-between align-items-start mb-2">
+          <div>
+            <div class="fw-bold">{{ event.title }}</div>
+            <small class="text-muted">{{ event.date_from|date:"M d, Y" }} — {{ event.date_to|date:"M d, Y" }}</small>
+          </div>
+          <div>
+            <span class="badge bg-{{ event.status_color }}">{{ event.status|title }}</span>
+          </div>
+        </div>
+      {% empty %}
+        <div class="text-muted">No events</div>
+      {% endfor %}
+    </div>
+
+    <div class="bg-white p-3 rounded shadow">
+      <h5 class="mb-3">Top in Dept</h5>
+      {% for user_obj, avg in ranks %}
+        <div class="d-flex align-items-center justify-content-between mb-2">
+          <div>
+            <div>{{ forloop.counter }}. <strong>{{ user_obj.get_full_name|default:user_obj.username }}</strong></div>
+            <small class="text-muted">{{ user_obj.department }}</small>
+          </div>
+          <div style="min-width:120px">
+            <div class="small text-muted mb-1">{{ avg|floatformat:2 }}%</div>
+            <div class="progress" style="height:6px;border-radius:6px">
+              <div class="progress-bar bg-success" role="progressbar" style="--progress: {{ avg|floatformat:0 }}%"></div>
+            </div>
+          </div>
+        </div>
+      {% empty %}
+        <div class="text-muted">No ranks yet</div>
+      {% endfor %}
+    </div>
+  </aside>
+</div>
+  {% block scripts %}
+    {{ block.super }}
+    <script>
+      (function(){
+        function getCookie(name) {
+          const v = document.cookie.match('(^|;)\\s*' + name + '\\s*=\\s*([^;]+)');
+          return v ? v.pop() : '';
+        }
+
+        // AJAX comment submission
+        document.addEventListener('submit', function(e){
+          const form = e.target;
+          if(form && form.id && form.id.startsWith('comment-')){
+            e.preventDefault();
+            // Prevent double submissions by marking the form as posting
+            if(form.dataset.posting === '1') return; // already posting
+            const submitBtn = form.querySelector('button[type="submit"]');
+            const textarea = form.querySelector('textarea[name="content"]');
+            if(!textarea) return;
+            const val = textarea.value.trim();
+            if(!val) return;
+            form.dataset.posting = '1';
+            if(submitBtn) submitBtn.disabled = true;
+            const url = form.action;
+            const csrftoken = getCookie('csrftoken');
+            const fd = new FormData(form);
+            fetch(url, {method: 'POST', body: fd, headers: {'X-CSRFToken': csrftoken, 'X-Requested-With':'XMLHttpRequest'}, credentials: 'same-origin'})
+              .then(r=>r.json())
+              .then(data=>{
+                if(data && data.ok && data.html){
+                  // insert the returned comment HTML into the comments container for this post
+                  const postId = form.id.replace('comment-','');
+                  let container = document.getElementById('post-comments-' + postId);
+                  if(!container){
+                    // create container
+                    container = document.createElement('div');
+                    container.id = 'post-comments-' + postId;
+                    container.className = 'mt-3 pt-3 border-top';
+                    form.parentNode.insertBefore(container, form);
+                  }
+                  // append the new comment HTML
+                  container.insertAdjacentHTML('beforeend', data.html);
+                  // clear textarea
+                  textarea.value = '';
+                }
+              }).catch(err=>{ console.error(err); })
+              .finally(()=>{
+                // release posting lock
+                form.dataset.posting = '0';
+                if(submitBtn) submitBtn.disabled = false;
+              });
+          }
+        });
+
+        // autofocus when clicking comment icon (anchor to '#comment-<id>')
+        document.addEventListener('click', function(e){
+          const a = e.target.closest('a[href^="#comment-"]');
+          if(a){
+            const href = a.getAttribute('href');
+            const id = href.replace('#comment-','');
+            const form = document.getElementById('comment-' + id);
+            if(form){
+              const ta = form.querySelector('.js-comment-input');
+              if(ta){ ta.focus(); }
+            }
+          }
+        });
+
+        // delegate edit/delete clicks
+        document.addEventListener('click', function(e){
+          const editBtn = e.target.closest('.js-edit-comment');
+          if (editBtn) {
+            const cid = editBtn.getAttribute('data-comment-id');
+            const commentEl = document.getElementById('comment-' + cid);
+            if (!commentEl) return;
+            const contentEl = commentEl.querySelector('.comment-content');
+            if (!contentEl) return;
+            // guard: don't create another editor if one already exists
+            if (contentEl.querySelector('textarea')) return;
+            // preserve original HTML so we can restore it (keeps formatting)
+            const originalHTML = contentEl.innerHTML;
+            const originalText = (contentEl.textContent || '').trim();
+            // replace with textarea + save/cancel
+            const ta = document.createElement('textarea');
+            ta.className = 'form-control mb-2';
+            ta.value = originalText;
+            contentEl.innerHTML = '';
+            contentEl.appendChild(ta);
+
+            const saveBtn = document.createElement('button');
+            saveBtn.type = 'button';
+            saveBtn.className = 'btn btn-sm btn-primary me-2';
+            saveBtn.textContent = 'Save';
+
+            const cancelBtn = document.createElement('button');
+            cancelBtn.type = 'button';
+            cancelBtn.className = 'btn btn-sm btn-outline-secondary';
+            cancelBtn.textContent = 'Cancel';
+
+            const controls = document.createElement('div');
+            controls.className = 'mt-2 d-flex';
+            controls.style.gap = '0.5rem';
+            controls.appendChild(saveBtn);
+            controls.appendChild(cancelBtn);
+            contentEl.appendChild(controls);
+
+            cancelBtn.addEventListener('click', function (ev) {
+              ev.preventDefault();
+              // restore original HTML (preserves any markup)
+              contentEl.innerHTML = originalHTML;
+            });
+
+            saveBtn.addEventListener('click', function (ev) {
+              ev.preventDefault();
+              const newVal = ta.value.trim();
+              if (!newVal) return;
+              const csrftoken = getCookie('csrftoken');
+              fetch('{% url "core:ajax_edit_comment" 0 %}'.replace('/0/', '/' + cid + '/'), {
+                method: 'POST',
+                headers: { 'X-CSRFToken': csrftoken, 'X-Requested-With': 'XMLHttpRequest' },
+                body: new URLSearchParams({ 'content': newVal }),
+                credentials: 'same-origin'
+              }).then(r => r.json()).then(data => {
+                if (data && data.ok && data.html) {
+                  // replace comment element with new HTML
+                  commentEl.outerHTML = data.html;
+                }
+              }).catch(err => console.error(err));
+            });
+          }
+
+          const delBtn = e.target.closest('.js-delete-comment');
+          if(delBtn){
+            // prevent multiple handlers from asking twice: set a confirming flag
+            if(delBtn.dataset.confirming === '1') return;
+            delBtn.dataset.confirming = '1';
+            const cid = delBtn.getAttribute('data-comment-id');
+            const proceed = confirm('Delete this comment?');
+            if(!proceed){
+              // reset flag and exit
+              delBtn.dataset.confirming = '0';
+              return;
+            }
+            // disable button to give visual feedback
+            delBtn.disabled = true;
+            const csrftoken = getCookie('csrftoken');
+            fetch('{% url "core:ajax_delete_comment" 0 %}'.replace('/0/','/' + cid + '/'), {method:'POST', headers:{'X-CSRFToken': csrftoken, 'X-Requested-With':'XMLHttpRequest'}, credentials:'same-origin'})
+              .then(r=>r.json()).then(data=>{
+                if(data && data.ok && data.deleted_id){
+                  const el = document.getElementById('comment-' + data.deleted_id);
+                  if(el) el.remove();
+                }
+              }).catch(err=>console.error(err))
+              .finally(()=>{
+                delBtn.dataset.confirming = '0';
+                delBtn.disabled = false;
+              });
+          }
+        });
+      })();
+    </script>
+  {% endblock %}
+  {% endblock %}

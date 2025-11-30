@@ -1,0 +1,56 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container py-5">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="mb-0">Campus News</h2>
+    {% if request.user.is_authenticated %}
+      <a href="{% url 'core:add_news' %}" class="btn btn-primary">Add News</a>
+    {% endif %}
+  </div>
+
+  <style>
+    .news-card { transition: transform .15s ease, box-shadow .15s ease; }
+    .news-card:hover { transform: translateY(-4px); box-shadow: 0 10px 30px rgba(0,0,0,0.08); }
+    .news-card .card-img-top{ height:220px; object-fit:cover; }
+    .news-meta { font-size: .95rem; color: #6c757d; }
+  </style>
+
+  <div class="row g-4">
+    {% for item in news_list %}
+      <div class="col-md-6">
+        <div class="card news-card h-100 overflow-hidden">
+          {% if item.image %}
+            <img src="{{ item.image.url }}" class="card-img-top" alt="{{ item.title }}">
+          {% else %}
+            <div class="bg-light" style="height:220px;"></div>
+          {% endif %}
+
+          <div class="card-body d-flex flex-column">
+            <div class="mb-2 d-flex justify-content-between align-items-center">
+              <small class="text-muted">{{ item.created_at|date:"M d, Y" }}</small>
+              <span class="badge bg-secondary">{{ item.author_role|default:'User'|title }}</span>
+            </div>
+            <h5 class="card-title">{{ item.title }}</h5>
+            <p class="card-text text-muted mb-3">{{ item.short_description|truncatewords:20 }}</p>
+
+            <div class="mt-auto d-flex justify-content-between align-items-center">
+              <div class="news-meta">{{ item.content|wordcount }} words</div>
+              <div>
+                <a href="{% url 'core:news_detail' item.pk %}" class="btn btn-sm btn-outline-primary me-2">Read More</a>
+                {% if request.user.is_authenticated and request.user.is_staff or request.user.is_authenticated and request.user.id == item.author_id %}
+                  <a href="{% url 'core:edit_news' item.pk %}" class="btn btn-sm btn-outline-secondary me-1">Edit</a>
+                  <a href="{% url 'core:delete_news' item.pk %}" class="btn btn-sm btn-outline-danger">Delete</a>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    {% empty %}
+      <div class="col-12">
+        <div class="alert alert-info">No news yet.</div>
+      </div>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}

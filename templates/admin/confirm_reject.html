@@ -1,0 +1,10 @@
+{% extends 'base.html' %}
+{% block content %}
+  <div class="card">
+    <div class="card-body">
+      <h5>Reject teacher request</h5>
+      <p>Are you sure you want to reject <strong>{{ user_obj.get_full_name|default:user_obj.username }}</strong>'s request to be a teacher? This will demote them to a student.</p>
+      <form method="post">{% csrf_token %}<button class="btn btn-danger">Yes, reject</button> <a href="{% url 'core:pending_teachers' %}" class="btn btn-secondary">Cancel</a></form>
+    </div>
+  </div>
+{% endblock %}

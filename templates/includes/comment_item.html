@@ -1,0 +1,24 @@
+﻿<div id="comment-{{ comment.id }}" class="media d-flex mb-3 align-items-start">
+  <div class="me-3">
+    {% if comment.author.student_profile and comment.author.student_profile.avatar %}
+      <img src="{{ comment.author.student_profile.avatar.url }}" alt="avatar" class="rounded-circle" width="40" height="40">
+    {% else %}
+      <div class="rounded-circle bg-light text-dark d-flex align-items-center justify-content-center" style="width:40px;height:40px;font-weight:600">{{ comment.author.username|slice:":1"|upper }}</div>
+    {% endif %}
+  </div>
+  <div class="flex-grow-1">
+    <div class="d-flex justify-content-between align-items-start">
+      <div>
+        <strong class="small">{{ comment.author.get_full_name|default:comment.author.username }}</strong>
+        <div class="small text-muted">{{ comment.created_at|date:"M d, Y H:i" }}  {{ comment.created_at|timesince }} ago</div>
+      </div>
+      <div>
+        {% if comment.author.pk == user.pk or user.is_staff %}
+          <button class="btn btn-sm btn-outline-secondary js-edit-comment" data-comment-id="{{ comment.id }}">Edit</button>
+          <button class="btn btn-sm btn-outline-danger js-delete-comment" data-comment-id="{{ comment.id }}">Delete</button>
+        {% endif %}
+      </div>
+    </div>
+    <div class="mt-2 comment-content">{{ comment.content }}</div>
+  </div>
+</div>

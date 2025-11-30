@@ -1,0 +1,81 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="card">
+  <div class="card-header">
+    <h5 class="mb-0">Pending Teacher Requests</h5>
+  </div>
+  <div class="card-body">
+    {% if pending %}
+      <table class="table table-striped">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Email</th>
+            <th>Department</th>
+            <th>Requested</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+        {% for u in pending %}
+          <tr>
+            <td>{{ u.get_full_name|default:u.username }}</td>
+            <td>{{ u.email }}</td>
+            <td>{{ u.department }}</td>
+            <td>{{ u.date_joined }}</td>
+            <td>
+              <form method="post" action="{% url 'core:approve_teacher' u.pk %}" style="display:inline">
+                {% csrf_token %}
+                <button class="btn btn-success btn-sm">Approve</button>
+              </form>
+              <form method="post" action="{% url 'core:reject_teacher' u.pk %}" style="display:inline; margin-left:.5rem">
+                {% csrf_token %}
+                <button class="btn btn-danger btn-sm">Reject</button>
+              </form>
+            </td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    {% else %}
+      <p>No pending teacher requests.</p>
+    {% endif %}
+  </div>
+</div>
+  <script>
+    (function(){
+      // helper to get CSRF token
+      function getCookie(name){
+        const v = document.cookie.match('(^|;)\\s*'+ name + '\\s*=\\s*([^;]+)');
+        return v ? v.pop() : '';
+      }
+
+      function bindForms(){
+        const forms = Array.from(document.querySelectorAll('.card form'));
+        forms.forEach(f => {
+          f.addEventListener('submit', function(ev){
+            ev.preventDefault();
+            const url = f.getAttribute('action');
+            const csrftoken = getCookie('csrftoken');
+            fetch(url, {method:'POST', credentials:'same-origin', headers:{'X-CSRFToken': csrftoken, 'X-Requested-With':'XMLHttpRequest'}})
+              .then(r => r.json())
+              .then(data => {
+                if(data && data.ok){
+                  // remove the table row containing this form
+                  const row = f.closest('tr');
+                  if(row) row.remove();
+                } else {
+                  // fallback: reload the page to show changes
+                  location.reload();
+                }
+              }).catch(()=>{ location.reload(); });
+          });
+        });
+      }
+
+      document.addEventListener('DOMContentLoaded', bindForms);
+    })();
+  </script>
+{% endblock %}

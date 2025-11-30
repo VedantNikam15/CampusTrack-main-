@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="bg-white p-3 rounded shadow">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h5 class="mb-0">Events Management</h5>
+    <a href="{% url 'core:create_event' %}" class="btn btn-primary">Create Event</a>
+  </div>
+  <div class="list-group">
+    {% for e in events %}
+      <div class="list-group-item d-flex justify-content-between align-items-center">
+        <div>
+          <strong>{{ e.title }}</strong>
+          <div class="small text-muted">{{ e.date_from|date:'Y-m-d H:i' }} — {{ e.date_to|date:'Y-m-d H:i' }}</div>
+          <div class="small">{{ e.description|truncatechars:120 }}</div>
+        </div>
+        <div>
+          <a href="{% url 'core:edit_event' e.pk %}" class="btn btn-sm btn-outline-secondary me-2">Edit</a>
+          <form action="{% url 'core:delete_event' e.pk %}" method="post" style="display:inline">
+            {% csrf_token %}
+            <button class="btn btn-sm btn-outline-danger" type="submit">Delete</button>
+          </form>
+        </div>
+      </div>
+    {% empty %}
+      <div class="text-muted p-3">No events found.</div>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}

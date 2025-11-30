@@ -1,0 +1,269 @@
+<!doctype html>
+<html>
+<head>
+  {% load static %}
+  <meta charset="utf-8">
+  <title>CampusTrack</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css">
+  <!-- Bootstrap Icons -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+  <link rel="stylesheet" href="{% static 'css/style.css' %}">
+</head>
+<body class="{% block body_class %}bg-gray-100 min-h-screen{% endblock %}">
+  <nav class="bg-white shadow p-4">
+    <div class="container mx-auto flex justify-between items-center">
+      <a href="{% url 'home' %}" class="font-bold text-xl">CampusTrack</a>
+      <div class="d-flex align-items-center">
+        <a href="{% url 'core:news_list' %}" class="btn btn-outline-primary btn-sm me-2"><i class="bi bi-newspaper me-1" aria-hidden="true"></i>News</a>
+        {% if user.is_authenticated %}
+          <a href="{% url 'dashboard' %}" class="btn btn-outline-primary btn-sm me-2"><i class="bi bi-speedometer2 me-1" aria-hidden="true"></i>Dashboard</a>
+          <a href="{% url 'core:college_activity' %}" class="btn btn-outline-primary btn-sm me-2"><i class="bi bi-calendar3 me-1" aria-hidden="true"></i>College Activity</a>
+          <a href="{% url 'core:notifications' %}" class="btn btn-outline-primary btn-sm me-2 position-relative" id="notif-link">
+            <i class="bi bi-bell me-1" aria-hidden="true"></i>Notifications
+            <span id="notif-badge" class="badge bg-danger text-white position-absolute" style="top:-6px;right:-6px;display:none;">0</span>
+          </a>
+          <a href="{% url 'core:view_profile' user.pk %}" class="btn btn-outline-secondary btn-sm me-2"><i class="bi bi-person-circle me-1" aria-hidden="true"></i>Profile</a>
+          <form method="post" action="{% url 'logout' %}" class="m-0">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-dark btn-sm"><i class="bi bi-box-arrow-right me-1" aria-hidden="true"></i>Logout</button>
+          </form>
+          {% if user.is_staff %}
+            <a href="{% url 'core:pending_teachers' %}" class="btn btn-outline-secondary btn-sm ms-2"><i class="bi bi-people-fill me-1" aria-hidden="true"></i>Pending Teachers</a>
+          {% endif %}
+        {% else %}
+          <a href="{% url 'login' %}" class="btn btn-primary btn-sm me-2"><i class="bi bi-box-arrow-in-right me-1" aria-hidden="true"></i>Login</a>
+          <a href="{% url 'register' %}" class="btn btn-cta btn-sm"><i class="bi bi-person-plus me-1" aria-hidden="true"></i>Register</a>
+        {% endif %}
+      </div>
+    </div>
+  </nav>
+
+  <main class="container mx-auto p-4">
+    {% if messages %}
+      {% for message in messages %}
+        <div class="alert alert-info">{{ message }}</div>
+      {% endfor %}
+    {% endif %}
+    {% block content %}{% endblock %}
+  </main>
+
+  <!-- Core JS: jQuery, Popper, Bootstrap (for interactive components used site-wide) -->
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.min.js"></script>
+
+  <!-- Password show/hide toggle: automatically adds an eye button to password inputs -->
+  <script>
+    (function(){
+      function createBtn(){
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'toggle-btn';
+        btn.setAttribute('aria-pressed','false');
+        btn.setAttribute('aria-label','Show password');
+        btn.innerHTML = '\u{1F441}'; // simple eye emoji fallback
+        return btn;
+      }
+
+      function setIcon(btn, visible){
+        // Use SVG for crispness when possible
+        if(visible){
+          btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 16 16"><path d="M13.359 8.238C12.52 6.896 10.972 5.5 8 5.5c-2.972 0-4.52 1.396-5.359 2.738a.5.5 0 0 0 0 .524C3.48 9.104 4.999 10.5 8 10.5c3.001 0 4.52-1.396 5.359-2.738a.5.5 0 0 0 0-.524z"/><path d="M8 4.5a3.5 3.5 0 1 1 0 7 3.5 3.5 0 0 1 0-7z"/></svg>';
+          btn.setAttribute('aria-label','Hide password');
+          btn.setAttribute('aria-pressed','true');
+        } else {
+          btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 16 16"><path d="M13.359 8.238C12.52 6.896 10.972 5.5 8 5.5c-2.972 0-4.52 1.396-5.359 2.738a.5.5 0 0 0 0 .524C3.48 9.104 4.999 10.5 8 10.5c3.001 0 4.52-1.396 5.359-2.738a.5.5 0 0 0 0-.524z"/><path d="M8 3a5 5 0 0 0-4.546 2.916.5.5 0 1 0 .912.41A4 4 0 1 1 8 12a3.99 3.99 0 0 1-2.828-1.172.5.5 0 0 0-.707.707A4.99 4.99 0 1 0 8 3z"/></svg>';
+          btn.setAttribute('aria-label','Show password');
+          btn.setAttribute('aria-pressed','false');
+        }
+      }
+
+      // initialize on DOMContentLoaded
+      document.addEventListener('DOMContentLoaded', function(){
+        const pwdInputs = Array.from(document.querySelectorAll('input[type="password"]'));
+        pwdInputs.forEach(function(input){
+          // avoid duplicating if already wrapped
+          if(input.closest('.password-toggle')) return;
+          const wrapper = document.createElement('div');
+          wrapper.className = 'password-toggle';
+          input.parentNode.insertBefore(wrapper, input);
+          wrapper.appendChild(input);
+
+          const btn = createBtn();
+          setIcon(btn, false);
+          btn.classList.add('toggle-btn');
+          btn.addEventListener('click', function(){
+            const isPwd = input.getAttribute('type') === 'password';
+            if(isPwd){
+              input.setAttribute('type','text');
+              setIcon(btn, true);
+            } else {
+              input.setAttribute('type','password');
+              setIcon(btn, false);
+            }
+            input.focus();
+          });
+          wrapper.appendChild(btn);
+        });
+      });
+    })();
+  </script>
+
+  <!-- Notification polling and toast UI -->
+  <div id="toast-container" aria-live="polite" aria-atomic="true" style="position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 1080; width: 100%; max-width: 540px; display:flex; flex-direction:column; gap:0.5rem; align-items:center; justify-content:center; pointer-events:none;"></div>
+    {% block scripts %}{% endblock %}
+  <script>
+    (function(){
+      // Simple polling for unread notifications and toast display
+      let lastSeenId = 0;
+      const badge = document.getElementById('notif-badge');
+      const toastContainer = document.getElementById('toast-container');
+
+      function getCookie(name) {
+        const v = document.cookie.match('(^|;)\\s*' + name + '\\s*=\\s*([^;]+)');
+        return v ? v.pop() : '';
+      }
+
+      function updateBadge(count){
+        if(!badge) return;
+        if(count && count > 0){
+          badge.style.display = 'inline-block';
+          badge.textContent = count;
+        } else {
+          badge.style.display = 'none';
+        }
+      }
+
+      function showToast(n){
+        const toastId = 'notif-toast-' + n.id;
+        if(document.getElementById(toastId)) return; // already shown
+        const wrapper = document.createElement('div');
+        wrapper.innerHTML = `
+    <div id="${toastId}" class="toast fade poda-toast shadow-lg" role="alert" aria-live="assertive" aria-atomic="true" data-autohide="true" data-delay="8000" style="pointer-events:auto; border-radius:12px; overflow:hidden;">
+      <div class="d-flex align-items-start p-3" style="gap:.75rem;">
+        <div style="flex:0 0:auto; width:44px; height:44px; border-radius:8px; background:linear-gradient(90deg,#0d6efd,#6f42c1); display:flex; align-items:center; justify-content:center; color:#fff; font-weight:700;">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16"><path d="M8 16a2 2 0 0 0 1.985-1.75H6.015A2 2 0 0 0 8 16z"/><path d="M8 1a4 4 0 0 0-4 4v2.086l-.707.707A1 1 0 0 0 3 10h10a1 1 0 0 0 .707-1.707L13 7.086V5a4 4 0 0 0-4-4z"/></svg>
+        </div>
+        <div style="flex:1 1 auto; min-width:0;">
+          <div class="d-flex justify-content-between align-items-start">
+            <div style="min-width:0;">
+              <div style="font-weight:700; color:#0f172a;">Notification</div>
+              <div style="font-size:.85rem; color:#6b7280;">now</div>
+            </div>
+            <div style="margin-left:8px; flex:0 0:auto;">
+              <button type="button" class="btn btn-sm btn-light" data-dismiss="toast" aria-label="Close" style="font-weight:600; padding:.25rem .5rem;">×</button>
+            </div>
+          </div>
+          <div style="margin-top:.5rem; color:#111827;">${n.content}</div>
+        </div>
+      </div>
+    </div>
+        `;
+        const el = wrapper.firstElementChild;
+        toastContainer.appendChild(el);
+        // when clicked, mark as read and redirect to notifications page
+        el.addEventListener('click', function(){
+          markRead(n.id);
+        });
+        // initialize bootstrap toast via jQuery
+        $(el).toast('show');
+      }
+
+      function markRead(id){
+        const url = '/core/ajax/notifications/mark-read/';
+        const csrftoken = getCookie('csrftoken');
+        const form = new FormData();
+        form.append('id', id);
+        fetch(url, {method: 'POST', body: form, headers: {'X-CSRFToken': csrftoken}})
+          .then(r=>r.json()).then(d=>{
+            // refresh badge
+            fetchUnread();
+          }).catch(()=>{});
+      }
+
+      function fetchUnread(){
+        const url = '/core/ajax/notifications/unread/?last_id=' + encodeURIComponent(lastSeenId || '');
+        fetch(url, {credentials: 'same-origin'})
+          .then(r=>r.json())
+          .then(data=>{
+            if(!data) return;
+            const arr = data.notifications || [];
+            if(arr.length){
+              arr.forEach(n => {
+                showToast(n);
+                if(n.id && n.id > lastSeenId) lastSeenId = n.id;
+              });
+            }
+            updateBadge(data.unread_count || 0);
+          }).catch(()=>{});
+      }
+
+      document.addEventListener('DOMContentLoaded', function(){
+        // Only start polling if the notification badge exists (i.e. user is authenticated)
+        if(badge){
+          // initial fetch to seed lastSeenId and badge
+          fetchUnread();
+          // poll every 5 seconds while the page is visible
+          let notifInterval = setInterval(fetchUnread, 5000);
+
+          // Pause polling when the page is hidden to avoid background noise and
+          // unnecessary server requests; resume when visible again.
+          document.addEventListener('visibilitychange', function(){
+            if(document.hidden){
+              clearInterval(notifInterval);
+              notifInterval = null;
+            } else if(!notifInterval){
+              fetchUnread();
+              notifInterval = setInterval(fetchUnread, 5000);
+            }
+          });
+        }
+      });
+    })();
+  </script>
+
+  <!-- Heartbeat auto-reload: polls a reload token and reloads when it changes -->
+  {% if debug %}
+  <script>
+    (function(){
+      const hbUrl = '/core/ajax/heartbeat/';
+      let lastToken = null;
+      let hbInterval = null;
+
+      function checkHeartbeat(){
+        fetch(hbUrl, {credentials: 'same-origin'})
+          .then(r => r.json())
+          .then(data => {
+            if(!data || !data.reload_token) return;
+            if(!lastToken){
+              lastToken = data.reload_token;
+              return;
+            }
+            if(data.reload_token !== lastToken){
+              // token changed (e.g. new commit or update) -> reload to pick up changes
+              location.reload();
+            }
+          }).catch(()=>{});
+      }
+
+      document.addEventListener('DOMContentLoaded', function(){
+        // only poll while the page is visible
+        checkHeartbeat();
+        hbInterval = setInterval(checkHeartbeat, 5000);
+        document.addEventListener('visibilitychange', function(){
+          if(document.hidden){
+            if(hbInterval){ clearInterval(hbInterval); hbInterval = null; }
+          } else if(!hbInterval){
+            checkHeartbeat();
+            hbInterval = setInterval(checkHeartbeat, 5000);
+          }
+        });
+      });
+    })();
+  </script>
+  {% endif %}
+
+</body>
+</html>

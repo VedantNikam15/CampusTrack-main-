@@ -1,0 +1,39 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container py-5">
+  <style>
+    .news-hero { height: 380px; object-fit: cover; display:block; width:100%; }
+    .news-badge { position: absolute; right: 1rem; top: 1rem; }
+    .news-article { max-width: 900px; margin: 0 auto; }
+    .news-meta { color: #6c757d; }
+  </style>
+
+  <div class="news-article">
+    <div class="position-relative mb-4">
+      {% if news.image %}
+        <img src="{{ news.image.url }}" alt="{{ news.title }}" class="news-hero rounded shadow-sm">
+      {% else %}
+        <div class="bg-light rounded" style="height:380px;"></div>
+      {% endif %}
+      <span class="badge bg-secondary news-badge">{{ news.author_role|default:'User'|title }}</span>
+    </div>
+
+    <div class="card shadow-sm p-4">
+      <h1 class="fw-bold">{{ news.title }}</h1>
+      <div class="mb-3 news-meta">{{ news.created_at|date:"F j, Y \a\t H:i" }}</div>
+      <hr>
+      <div class="mb-4">{{ news.content|linebreaks }}</div>
+
+      <div class="d-flex justify-content-between align-items-center">
+        <div>
+          {% if request.user.is_authenticated and request.user.is_staff or request.user.is_authenticated and request.user.id == news.author_id %}
+            <a href="{% url 'core:edit_news' news.pk %}" class="btn btn-sm btn-outline-secondary me-2">Edit</a>
+            <a href="{% url 'core:delete_news' news.pk %}" class="btn btn-sm btn-outline-danger">Delete</a>
+          {% endif %}
+        </div>
+        <a href="{% url 'core:news_list' %}" class="btn btn-outline-secondary">Back to News</a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

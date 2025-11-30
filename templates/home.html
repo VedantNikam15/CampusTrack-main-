@@ -1,0 +1,89 @@
+{% extends 'base.html' %}
+
+{% block title %}Home - CampusTrack{% endblock %}
+
+{% block content %}
+<div class="py-5 text-center bg-light rounded-3 mb-4">
+  <div class="container py-4">
+    <h1 class="display-5 fw-bold">Welcome to CampusTrack</h1>
+    <p class="fs-5 text-muted mb-4">A simple platform for students and teachers to collaborate, track progress, and manage campus activities.</p>
+
+    {% if user.is_authenticated %}
+      <div class="d-grid gap-2 d-sm-flex justify-content-sm-center">
+        <a class="btn btn-primary btn-lg px-4 gap-3" href="{% url 'dashboard' %}">Go to Dashboard</a>
+        <a class="btn btn-outline-secondary btn-lg px-4" href="{% url 'logout' %}">Logout</a>
+      </div>
+    {% else %}
+      <div class="d-grid gap-2 d-sm-flex justify-content-sm-center">
+        <a class="btn btn-primary btn-lg px-4 gap-3" href="{% url 'login' %}">Login</a>
+        <a class="btn btn-outline-success btn-lg px-4" href="{% url 'register' %}">Register</a>
+      </div>
+    {% endif %}
+  </div>
+</div>
+
+<div class="container">
+  <div class="row g-4">
+    <div class="col-lg-4">
+      <div class="card h-100 shadow-sm">
+        <div class="card-body">
+          <h5 class="card-title">For Students</h5>
+          <p class="card-text">View your timetable, assignments, grades, and announcements all in one place.</p>
+          {% if user.is_authenticated and user.role == 'student' %}
+            <a href="{% url 'dashboard' %}" class="btn btn-primary">Student Dashboard</a>
+          {% else %}
+            <a href="{% url 'login' %}" class="btn btn-outline-primary">Login as Student</a>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-4">
+      <div class="card h-100 shadow-sm">
+        <div class="card-body">
+          <h5 class="card-title">For Teachers</h5>
+          <p class="card-text">Create events, verify student certificates, post updates, and track student performance.</p>
+          {% if user.is_authenticated and user.role == 'teacher' %}
+            <a href="{% url 'dashboard' %}" class="btn btn-success">Teacher Dashboard</a>
+          {% else %}
+            <a href="{% url 'login' %}" class="btn btn-outline-success">Login as Teacher</a>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-4">
+      <div class="card h-100 shadow-sm">
+        <div class="card-body">
+          <h5 class="card-title">Stay Notified</h5>
+          <p class="card-text">Never miss important announcements, deadlines, and campus activities.</p>
+          {% if user.is_authenticated %}
+            <a href="{% url 'dashboard' %}#notifications" class="btn btn-outline-dark">View Notifications</a>
+          {% else %}
+            <a href="{% url 'register' %}" class="btn btn-dark">Get Started</a>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <section class="mt-5">
+    <div class="row align-items-center">
+      <div class="col-md-6">
+        <h3 class="mb-3">Why CampusTrack?</h3>
+        <ul class="list-unstyled">
+          <li class="mb-2">• Centralized dashboard for students and teachers</li>
+          <li class="mb-2">• Easy certificate verification workflow</li>
+          <li class="mb-2">• Track marks and progress over time</li>
+          <li class="mb-2">• Event management for departments and college</li>
+        </ul>
+      </div>
+      <div class="col-md-6">
+        <div class="ratio ratio-16x9 rounded overflow-hidden shadow-sm">
+          <iframe src="https://www.youtube.com/embed/dQw4w9WgXcQ" title="CampusTrack Overview" allowfullscreen></iframe>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+{% endblock %}

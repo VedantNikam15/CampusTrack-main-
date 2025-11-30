@@ -1,0 +1,194 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="grid grid-cols-12 gap-4">
+  <aside class="col-span-12 md:col-span-3">
+    <div class="bg-white p-4 rounded shadow">
+      <div class="d-flex align-items-center">
+        <div class="me-3">
+          {% if user.teacher_profile and user.teacher_profile.avatar %}
+            <img src="{{ user.teacher_profile.avatar.url }}" alt="avatar" class="rounded-circle" width="64" height="64">
+          {% else %}
+            <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center" style="width:64px;height:64px;font-weight:700">{{ user.username|slice:":1"|upper }}</div>
+          {% endif %}
+        </div>
+        <div>
+          <h4 class="mb-0">{{ user.get_full_name|default:user.username }}</h4>
+          <div class="text-muted small">{{ user.department }}</div>
+        </div>
+      </div>
+
+      <hr class="my-3">
+      <div class="d-flex justify-content-between small text-muted">
+        <div>Pending certs</div>
+        <div class="fw-bold">{{ pending_certs|length }}</div>
+      </div>
+      <div class="mt-3">
+        <a href="{% url 'core:notifications' %}" class="btn btn-outline-secondary btn-sm w-100">View Notifications</a>
+      </div>
+    </div>
+  </aside>
+
+  <main class="col-span-12 md:col-span-9">
+    <div class="bg-white p-3 rounded shadow mb-4">
+      <div class="d-flex justify-content-between align-items-center mb-2">
+        <h5 class="mb-0">Pending Certificates</h5>
+        <small class="text-muted">Review and approve or reject</small>
+      </div>
+      {% for cert in pending_certs %}
+        <div class="d-flex align-items-start border-top pt-3 pb-2">
+          <div class="me-3">
+            <div class="rounded-circle bg-secondary text-white d-flex align-items-center justify-content-center" style="width:44px;height:44px">{{ cert.student.username|slice:":1"|upper }}</div>
+          </div>
+          <div class="flex-grow-1">
+            <div class="d-flex justify-content-between">
+              <div>
+                <strong>{{ cert.student.get_full_name|default:cert.student.username }}</strong>
+                <div class="text-muted small">{{ cert.title }}</div>
+              </div>
+              <div class="text-end">
+                <a href="{{ cert.file.url }}" target="_blank" class="btn btn-sm btn-outline-primary me-2"><i class="bi bi-file-earmark-text me-1" aria-hidden="true"></i>View</a>
+                <form action="{% url 'core:verify_certificate' cert.pk 'approve' %}" method="post" style="display:inline">
+                  {% csrf_token %}
+                  <button class="btn btn-sm btn-success"><i class="bi bi-check-circle me-1" aria-hidden="true"></i>Approve</button>
+                </form>
+                <form action="{% url 'core:verify_certificate' cert.pk 'reject' %}" method="post" style="display:inline; margin-left:4px;">
+                  {% csrf_token %}
+                  <input type="hidden" name="feedback" value="Not valid">
+                  <button class="btn btn-sm btn-danger"><i class="bi bi-x-circle me-1" aria-hidden="true"></i>Reject</button>
+                </form>
+              </div>
+            </div>
+          </div>
+        </div>
+      {% empty %}
+        <div class="text-muted">No pending certificates</div>
+      {% endfor %}
+    </div>
+
+    <div class="bg-white p-3 rounded shadow mb-4">
+      <h5 class="mb-3">Actions</h5>
+      <div class="d-flex gap-2">
+        <a href="{% url 'core:add_marks' %}" class="btn btn-primary"><i class="bi bi-journal-plus me-1" aria-hidden="true"></i>Add Marks</a>
+  <a href="{% url 'core:marks_list' %}" class="btn btn-outline-primary"><i class="bi bi-table me-1" aria-hidden="true"></i>Manage Marks</a>
+  <a href="{% url 'core:create_event' %}" class="btn btn-outline-secondary"><i class="bi bi-calendar-plus me-1" aria-hidden="true"></i>Create Event</a>
+  <a href="{% url 'core:events_list' %}" class="btn btn-outline-primary"><i class="bi bi-calendar3 me-1" aria-hidden="true"></i>Manage Events</a>
+  
+      </div>
+    </div>
+    <!-- Bulk upload / availability card -->
+    <div class="bg-white p-3 rounded shadow-sm mb-4">
+      <h5 class="fw-bold mb-2">Bulk Student Check &amp; Marks Upload</h5>
+      <p class="text-muted small mb-3">Upload an Excel file to verify student presence and auto-import marks.</p>
+
+      <a href="{% url 'core:bulk_upload_marks' %}" class="btn btn-outline-primary me-2">
+        <i class="bi bi-cloud-upload me-1"></i> Bulk Marks Upload
+      </a>
+
+      <a href="{% url 'core:student_availability' %}" class="btn btn-outline-secondary">
+        <i class="bi bi-search me-1"></i> Check Student Availability
+      </a>
+    </div>
+    <div class="bg-white p-3 rounded shadow mb-4">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h5 class="mb-0">Students</h5>
+        <div>
+          {% if show_inactive %}
+            <a href="?" class="btn btn-sm btn-outline-secondary">Hide inactive</a>
+          {% else %}
+            <a href="?show_inactive=1" class="btn btn-sm btn-outline-secondary">Show inactive</a>
+          {% endif %}
+        </div>
+      </div>
+      <div class="list-group">
+        {% for s in students|slice:":12" %}
+          <div class="list-group-item d-flex justify-content-between align-items-center">
+            <div class="d-flex align-items-center">
+              <div class="me-3">
+                <div class="rounded-circle bg-secondary text-white d-flex align-items-center justify-content-center" style="width:36px;height:36px">{{ s.username|slice:":1"|upper }}</div>
+              </div>
+              <div>
+                <div><strong>{{ s.get_full_name|default:s.username }}</strong></div>
+                <div class="small text-muted">{{ s.department }}</div>
+              </div>
+            </div>
+              <div>
+                {% if not s.is_active %}
+                  <span class="badge badge-secondary mr-2">Inactive</span>
+                {% endif %}
+                <a href="{% url 'core:student_insights' s.pk %}" class="btn btn-sm btn-outline-primary me-2"><i class="bi bi-bar-chart-line me-1" aria-hidden="true"></i>Insights</a>
+                <a href="{% url 'core:view_profile' s.pk %}" class="btn btn-sm btn-outline-secondary me-2">Profile</a>
+                <form action="{% url 'core:toggle_student_active' s.pk %}" method="post" style="display:inline" class="toggle-active-form" data-student-name="{{ s.get_full_name|default:s.username }}">
+                  {% csrf_token %}
+                  {% if s.is_active %}
+                    <!-- Deactivate will show a confirmation modal -->
+                    <button type="button" class="btn btn-sm btn-outline-danger js-deactivate-btn">Deactivate</button>
+                  {% else %}
+                    <!-- Reactivate can be immediate -->
+                    <button type="submit" class="btn btn-sm btn-outline-success">Reactivate</button>
+                  {% endif %}
+                </form>
+              </div>
+          </div>
+        {% empty %}
+          <div class="text-muted">No students available</div>
+        {% endfor %}
+      </div>
+    </div>
+  </main>
+</div>
+    <!-- Confirmation modal for deactivating a student -->
+    <div class="modal fade" id="confirmDeactivateModal" tabindex="-1" role="dialog" aria-labelledby="confirmDeactivateLabel" aria-hidden="true">
+      <div class="modal-dialog" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="confirmDeactivateLabel">Confirm Deactivation</h5>
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>
+          <div class="modal-body">
+            Are you sure you want to deactivate <strong id="confirm-student-name">this student</strong>? This will prevent them from logging in but will keep their records.
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+            <button type="button" id="confirm-deactivate" class="btn btn-danger">Yes, Deactivate</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    {% block scripts %}
+      {{ block.super }}
+      <script>
+        (function(){
+          let pendingForm = null;
+          document.addEventListener('DOMContentLoaded', function(){
+            document.querySelectorAll('.js-deactivate-btn').forEach(function(btn){
+              btn.addEventListener('click', function(e){
+                const form = btn.closest('form.toggle-active-form');
+                if(!form) return;
+                pendingForm = form;
+                const name = form.getAttribute('data-student-name') || 'this student';
+                const el = document.getElementById('confirm-student-name');
+                if(el) el.textContent = name;
+                // show bootstrap modal
+                $('#confirmDeactivateModal').modal('show');
+              });
+            });
+
+            const confirmBtn = document.getElementById('confirm-deactivate');
+            if(confirmBtn){
+              confirmBtn.addEventListener('click', function(){
+                if(!pendingForm) return;
+                // submit the stored form
+                pendingForm.submit();
+                // hide modal
+                $('#confirmDeactivateModal').modal('hide');
+                pendingForm = null;
+              });
+            }
+          });
+        })();
+      </script>
+    {% endblock %}
+{% endblock %}

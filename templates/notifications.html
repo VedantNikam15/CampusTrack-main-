@@ -1,0 +1,60 @@
+{% extends 'base.html' %}
+
+{% block title %}Notifications - CampusTrack{% endblock %}
+
+{% block content %}
+<div class="container">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>Notifications</h2>
+    <div class="text-muted">Latest updates for {{ user.get_full_name|default:user.username }}</div>
+  </div>
+  <div class="d-flex justify-content-end mb-3">
+    <form method="post" action="{% url 'core:clear_read_notifications' %}" id="clear-read-form" class="m-0">
+      {% csrf_token %}
+      <button type="submit" class="btn btn-outline-secondary btn-sm" id="clear-read-btn">Clear read</button>
+    </form>
+  </div>
+
+  <div class="card">
+    <div class="card-body">
+      {% if notes %}
+        <ul class="list-group list-group-flush">
+          {% for n in notes %}
+          <li class="list-group-item d-flex justify-content-between align-items-start">
+            <div class="ms-2 me-auto">
+              <div class="fw-bold">{{ n.content }}</div>
+              <small class="text-muted">{{ n.created_at|timesince }} ago</small>
+            </div>
+            {% if n.read %}
+              <span class="badge bg-secondary rounded-pill">Read</span>
+            {% else %}
+              <span class="badge bg-primary rounded-pill">New</span>
+            {% endif %}
+          </li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <div class="text-center text-muted py-4">
+          <i class="fas fa-bell-slash fa-2x mb-2"></i>
+          <div>No notifications yet</div>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://kit.fontawesome.com/your-fontawesome-kit.js" crossorigin="anonymous"></script>
+<script>
+  (function(){
+    const form = document.getElementById('clear-read-form');
+    if(!form) return;
+    form.addEventListener('submit', function(e){
+      if(!confirm('Clear all read notifications? This will permanently remove them.')){
+        e.preventDefault();
+      }
+    });
+  })();
+</script>
+{% endblock %}

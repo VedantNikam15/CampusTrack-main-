@@ -1,0 +1,137 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container mt-4">
+  <div class="bg-white p-4 rounded shadow">
+    <div class="d-flex align-items-center mb-3">
+      {% if profile and profile.avatar %}
+        <img src="{{ profile.avatar.url }}" class="rounded-circle me-3" width="64" height="64">
+      {% else %}
+        <div class="rounded-circle bg-secondary text-white d-flex align-items-center justify-content-center me-3" style="width:64px;height:64px;font-weight:700">{{ student.username|slice:":1"|upper }}</div>
+      {% endif %}
+      <div>
+        <h4 class="mb-0">{{ student.get_full_name|default:student.username }}</h4>
+        <div class="small text-muted">{{ student.email }} • {{ student.department }}</div>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="col-md-4">
+        <h6>Overview</h6>
+        <ul class="list-unstyled">
+          <li><strong>Overall Avg:</strong> {{ overall_avg|floatformat:2 }}%</li>
+          <li><strong>Total Certificates:</strong> {{ total_certs }}</li>
+          <li><strong>Verified Certificates:</strong> {{ verified_certs }}</li>
+        </ul>
+        <hr>
+        <h6>Skills</h6>
+        {% if profile and profile.skills %}
+          <div class="d-flex flex-wrap gap-1">
+            {% for s in profile.skills %}
+              <span class="badge bg-primary">{{ s }}</span>
+            {% endfor %}
+          </div>
+        {% else %}
+          <div class="text-muted">No skills listed</div>
+        {% endif %}
+      </div>
+
+      <div class="col-md-8">
+        <h6>Subject averages</h6>
+        {% if subject_avgs %}
+          <!-- Chart: subject averages -->
+          <div class="mb-3">
+            <div class="mb-3">
+              <canvas id="subjectAvgChart" height="120"></canvas>
+            </div>
+            {% for s in subject_avgs %}
+              <div class="d-flex justify-content-between align-items-center mb-2">
+                <div>{{ s.subject }}</div>
+                <div class="text-muted">{{ s.avg_marks|floatformat:2 }}%</div>
+              </div>
+              <div class="progress mb-2" style="height:8px;border-radius:6px">
+                <div class="progress-bar bg-info" role="progressbar" style="--progress: {{ s.avg_marks|floatformat:0 }}%"></div>
+              </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <div class="text-muted">No marks yet</div>
+        {% endif %}
+
+        <h6 class="mt-3">Recent activity</h6>
+        <div class="row">
+          <div class="col-sm-6">
+            <h6>Posts</h6>
+            {% for p in recent_posts %}
+              <div class="border p-2 mb-2 rounded">
+                <div class="small text-muted">{{ p.created_at|date:'M d, Y H:i' }}</div>
+                <div>{{ p.content|truncatechars:120 }}</div>
+              </div>
+            {% empty %}
+              <div class="text-muted">No recent posts</div>
+            {% endfor %}
+          </div>
+          <div class="col-sm-6">
+            <h6>Comments</h6>
+            {% for c in recent_comments %}
+              <div class="border p-2 mb-2 rounded">
+                <div class="small text-muted">{{ c.created_at|date:'M d, Y H:i' }}</div>
+                <div>{{ c.content|truncatechars:120 }}</div>
+              </div>
+            {% empty %}
+              <div class="text-muted">No recent comments</div>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="mt-3">
+      <a href="{% url 'core:student_insights' student.pk %}" class="btn btn-outline-secondary btn-sm me-2">Refresh</a>
+      <a href="{% url 'dashboard' %}" class="btn btn-secondary btn-sm">Back to Dashboard</a>
+    </div>
+  </div>
+</div>
+{% if subject_avgs %}
+  <!-- Provide serialized subject averages safely into the page -->
+  {{ subject_avgs_json|json_script:"subject-avgs" }}
+  <!-- Chart.js CDN and render script for subject averages -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script>
+    (function(){
+      const subjectData = JSON.parse(document.getElementById('subject-avgs').textContent || '[]');
+      const labels = subjectData.map(s => s.subject);
+      const data = subjectData.map(s => s.avg_marks);
+
+      const ctx = document.getElementById('subjectAvgChart').getContext('2d');
+      new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: 'Average (%)',
+            data: data,
+            backgroundColor: 'rgba(13,110,253,0.85)',
+            borderColor: 'rgba(13,110,253,1)',
+            borderWidth: 1,
+            borderRadius: 6,
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            y: {
+              beginAtZero: true,
+              max: 100,
+              ticks: { callback: function(v){ return v + '%'; } }
+            }
+          },
+          plugins: {
+            legend: { display: false }
+          }
+        }
+      });
+    })();
+  </script>
+{% endif %}
+{% endblock %}

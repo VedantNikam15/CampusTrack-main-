@@ -1,0 +1,176 @@
+﻿{% load static %}
+<article class="card mb-4 shadow-sm" id="post-{{ post.pk }}">
+  <div class="card-body">
+    <div class="d-flex">
+      <div class="me-3">
+        {% if post.author.student_profile and post.author.student_profile.avatar %}
+          <img src="{{ post.author.student_profile.avatar.url }}" alt="avatar" class="rounded-circle" width="48" height="48">
+        {% else %}
+          <div class="rounded-circle bg-secondary text-white d-flex align-items-center justify-content-center" style="width:48px;height:48px;font-weight:600">{{ post.author.username|slice:":1"|upper }}</div>
+        {% endif %}
+      </div>
+
+      <div class="flex-grow-1">
+        <div class="d-flex justify-content-between align-items-start">
+          <div>
+            <h6 class="card-title mb-0">{{ post.author.get_full_name|default:post.author.username }}</h6>
+            <small class="text-muted">{{ post.author.department }}  {{ post.created_at|timesince }} ago</small>
+          </div>
+
+          <div class="text-end">
+            {% if user in post.likes.all %}
+              <a href="{% url 'core:toggle_like' post.pk %}" class="btn btn-sm btn-outline-danger me-1" title="Unlike"><i class="bi bi-heart-fill"></i> {{ post.likes.count }}</a>
+            {% else %}
+              <a href="{% url 'core:toggle_like' post.pk %}" class="btn btn-sm btn-outline-primary me-1" title="Like"><i class="bi bi-heart"></i> {{ post.likes.count }}</a>
+            {% endif %}
+
+            <a href="#comment-{{ post.pk }}" class="btn btn-sm btn-outline-secondary js-focus-comment" title="Comment"><i class="bi bi-chat-left-text"></i></a>
+
+            {% if post.author == user or user.is_staff %}
+              <button class="btn btn-sm btn-outline-secondary js-edit-post" data-post-id="{{ post.pk }}" title="Edit"><i class="bi bi-pencil"></i></button>
+              <button class="btn btn-sm btn-outline-danger js-delete-post" data-post-id="{{ post.pk }}" title="Delete"><i class="bi bi-trash"></i></button>
+            {% endif %}
+          </div>
+        </div>
+
+        <div class="mt-3 post-content text-break" style="white-space:pre-wrap">{{ post.content }}</div>
+
+        {% if post.attachment %}
+          <div class="mt-3">
+            {% with name=post.attachment.name|lower %}
+              {% if name|slice:"-4:" == ".pdf" %}
+                <a href="{{ post.attachment.url }}" target="_blank" class="btn btn-sm btn-outline-primary"><i class="bi bi-file-earmark-pdf me-1"></i>View PDF</a>
+              {% elif name|slice:"-4:" == ".png" or name|slice:"-4:" == ".jpg" or name|slice:"-5:" == ".jpeg" or name|slice:"-4:" == ".gif" %}
+                <div class="mt-2">
+                  <img src="{{ post.attachment.url }}" alt="attachment" class="img-fluid rounded" style="max-height:320px; object-fit:cover;">
+                </div>
+              {% else %}
+                <a href="{{ post.attachment.url }}" target="_blank" class="btn btn-sm btn-outline-secondary"><i class="bi bi-paperclip me-1"></i>Download Attachment</a>
+              {% endif %}
+            {% endwith %}
+          </div>
+        {% endif %}
+
+        {% if post.comments.count > 0 %}
+          <div class="mt-3 pt-3 border-top" id="post-comments-{{ post.pk }}">
+            {% for comment in post.comments.all|slice:":3" %}
+              {% include 'includes/comment_item.html' with comment=comment %}
+            {% endfor %}
+            {% if post.comments.count > 3 %}
+              <div class="small text-muted">Showing latest 3 comments — view all in post.</div>
+            {% endif %}
+          </div>
+        {% endif %}
+
+        <form method="post" action="{% url 'core:add_comment' post.pk %}" class="mt-3" id="comment-{{ post.pk }}">
+          {% csrf_token %}
+          <div class="d-flex">
+            <div class="me-3">
+              {% if user.student_profile and user.student_profile.avatar %}
+                <img src="{{ user.student_profile.avatar.url }}" alt="avatar" class="rounded-circle" width="40" height="40">
+              {% else %}
+                <div class="rounded-circle bg-secondary text-white d-flex align-items-center justify-content-center" style="width:40px;height:40px;font-weight:600">{{ user.username|slice:":1"|upper }}</div>
+              {% endif %}
+            </div>
+            <div class="flex-grow-1">
+              <div class="mb-2">
+                <textarea name="content" class="form-control js-comment-input" rows="2" placeholder="Share your thoughts..." aria-label="Write a comment"></textarea>
+              </div>
+              <div class="d-flex justify-content-end">
+                <button class="btn btn-outline-secondary btn-sm me-2" type="reset">Clear</button>
+                <button class="btn btn-primary btn-sm" type="submit"><i class="bi bi-send-fill me-1"></i>Comment</button>
+              </div>
+            </div>
+          </div>
+        </form>
+
+      </div>
+    </div>
+  </div>
+</article>
+
+<script>
+// Single idempotent binding for edit/delete actions on posts
+if (!window.postItemEventsBound) {
+  window.postItemEventsBound = true;
+  function getCookie(name) {
+    var cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+      var cookies = document.cookie.split(';');
+      for (var i = 0; i < cookies.length; i++) {
+        var cookie = cookies[i].trim();
+        if (cookie.substring(0, name.length + 1) === (name + '=')) {
+          cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+          break;
+        }
+      }
+    }
+    return cookieValue;
+  }
+
+  document.addEventListener('click', function (ev) {
+    var editBtn = ev.target.closest && ev.target.closest('.js-edit-post');
+    if (editBtn) {
+      var postId = editBtn.getAttribute('data-post-id');
+      var article = document.getElementById('post-' + postId);
+      if (!article) return;
+      var contentEl = article.querySelector('.post-content');
+      if (!contentEl) return;
+      if (article.querySelector('.post-edit-area')) return; // already editing
+      var original = (contentEl.textContent || contentEl.innerText || '').trim();
+      var textarea = document.createElement('textarea');
+      textarea.className = 'form-control post-edit-area';
+      textarea.value = original;
+      textarea.rows = 4;
+      contentEl.style.display = 'none';
+      contentEl.parentNode.insertBefore(textarea, contentEl);
+      var saveBtn = document.createElement('button'); saveBtn.className = 'btn btn-primary btn-sm mt-2 me-2'; saveBtn.textContent = 'Save';
+      var cancelBtn = document.createElement('button'); cancelBtn.className = 'btn btn-secondary btn-sm mt-2'; cancelBtn.textContent = 'Cancel';
+      var btnWrap = document.createElement('div'); btnWrap.className = 'mt-2'; btnWrap.appendChild(saveBtn); btnWrap.appendChild(cancelBtn);
+      textarea.parentNode.insertBefore(btnWrap, textarea.nextSibling);
+
+      cancelBtn.addEventListener('click', function () { textarea.remove(); btnWrap.remove(); contentEl.style.display = ''; });
+
+      saveBtn.addEventListener('click', function () {
+        var csrftoken = getCookie('csrftoken');
+        var url = ('{% url "core:edit_post" 0 %}').replace('/0/', '/' + postId + '/');
+        fetch(url, {
+          method: 'POST',
+          headers: {
+            'X-CSRFToken': csrftoken,
+            'X-Requested-With': 'XMLHttpRequest',
+            'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'
+          },
+          body: new URLSearchParams({content: textarea.value})
+        }).then(function(r){ return r.json(); }).then(function(data){
+          if (data && data.ok && data.html) {
+            var wrapper = document.createElement('div'); wrapper.innerHTML = data.html;
+            var newArticle = wrapper.querySelector('#post-' + postId);
+            if (newArticle) article.replaceWith(newArticle);
+          } else {
+            alert((data && data.error) ? data.error : 'Failed to save post');
+          }
+        }).catch(function(){ alert('Network error'); });
+      });
+      ev.preventDefault();
+    }
+
+    var delBtn = ev.target.closest && ev.target.closest('.js-delete-post');
+    if (delBtn) {
+      var postId = delBtn.getAttribute('data-post-id');
+      if (!confirm('Delete this post? This cannot be undone.')) return;
+      var csrftoken = getCookie('csrftoken');
+      var delUrl = ('{% url "core:delete_post" 0 %}').replace('/0/', '/' + postId + '/');
+      fetch(delUrl, { method: 'POST', headers: { 'X-CSRFToken': csrftoken, 'X-Requested-With': 'XMLHttpRequest' } })
+        .then(function(r){ return r.json(); }).then(function(data){
+          if (data && data.ok) {
+            var article = document.getElementById('post-' + postId); if (article) article.remove();
+          } else {
+            alert((data && data.error) ? data.error : 'Failed to delete post');
+          }
+        }).catch(function(){ alert('Network error'); });
+      ev.preventDefault();
+    }
+  }, false);
+}
+</script>

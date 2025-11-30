@@ -1,0 +1,230 @@
+/* Custom button and UI styles for CampusTrack */
+:root{
+  --brand-primary:#0d6efd;
+  --brand-primary-dark:#0b5ed7;
+  --brand-accent:#6f42c1;
+  --btn-radius:8px;
+}
+
+/* Base enhancements */
+body{background-color: #f7fafc; color:#223; font-family: Inter, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;}
+.container{max-width:1200px;}
+
+/* Button core */
+.btn{
+  border-radius:var(--btn-radius);
+  transition: transform .12s ease, box-shadow .12s ease, background-color .12s ease;
+  box-shadow: 0 2px 6px rgba(16,24,40,0.04);
+  padding: .5rem .9rem;
+  font-weight:600;
+}
+.btn:hover{transform: translateY(-2px); box-shadow: 0 6px 18px rgba(16,24,40,0.08); color: inherit;}
+.btn:active{transform: translateY(0);} 
+
+/* Primary (filled) */
+.btn-primary{
+  background: linear-gradient(90deg, var(--brand-primary), var(--brand-primary-dark));
+  color: #fff; border: none;
+}
+.btn-primary:hover{background: linear-gradient(90deg,var(--brand-primary-dark), #0a58ca); color: #fff; text-shadow: 0 1px 0 rgba(0,0,0,0.12);} 
+
+/* Secondary */
+.btn-outline-secondary{
+  background: transparent; border:1px solid rgba(34,51,65,0.08); color: #1f2937;
+}
+.btn-outline-secondary:hover{background: rgba(13,110,253,0.06); color: #1f2937;}
+
+/* Ghost / Link */
+.btn-ghost{background:transparent; border: none; color:var(--brand-primary); padding: .35rem .65rem;}
+.btn-ghost:hover{background: rgba(13,110,253,0.06); color: var(--brand-primary);}
+
+/* Success */
+.btn-success{background: linear-gradient(90deg,#28a745,#2ebd59); color:#fff; border:none}
+
+/* Dark */
+.btn-dark{background: linear-gradient(90deg,#374151,#111827); color:#fff; border:none}
+
+/* Outline styles with accent */
+.btn-outline-primary{background:transparent; border:1px solid rgba(13,110,253,0.12); color:var(--brand-primary);}
+.btn-outline-primary:hover{background: rgba(13,110,253,0.06);}
+
+/* Small/large modifiers */
+.btn-sm{padding:.35rem .6rem; font-size:.9rem}
+.btn-lg{padding:.75rem 1.25rem; font-size:1.05rem}
+
+/* CTA */
+.btn-cta{
+  padding: .8rem 1.2rem; border-radius: 12px; font-size:1.02rem;
+  background: linear-gradient(90deg,var(--brand-accent),var(--brand-primary)); color:#fff; box-shadow:0 10px 30px rgba(99,102,241,0.12);
+}
+.btn-cta:hover{filter:brightness(1.02); color:#fff; text-shadow: 0 1px 0 rgba(0,0,0,0.14); box-shadow:0 12px 34px rgba(99,102,241,0.14);} 
+
+/* When used with small modifier keep size consistent with other .btn-sm items (e.g., navbar) */
+.btn-cta.btn-sm, .btn-cta.btn-sm:focus {
+  padding: .35rem .6rem;
+  font-size: .9rem;
+  line-height: 1.2;
+}
+
+/* Badges */
+.badge{padding:.45em .6em; border-radius: .5rem; font-weight:600}
+
+/* Cards */
+.card{border-radius: 12px;}
+.card-header{border-radius: 12px 12px 0 0}
+
+/* Tables */
+.table thead th{border-bottom:2px solid rgba(0,0,0,0.05)}
+.table tbody tr:hover{background: rgba(13,110,253,0.03)}
+
+/* Small responsive tweaks */
+@media (max-width: 768px){
+  .d-flex.gap-2 {flex-direction:column}
+}
+
+/* Progress bar: allow templates to set --progress via inline style (e.g. --progress: 42%) */
+.progress-bar{ width: var(--progress, 0%); transition: width .45s ease; }
+
+/* Username availability feedback (shows directly below username input) */
+.username-feedback{ display:block; margin-top:.35rem; font-size:.92rem; }
+.username-feedback.valid{ color: #198754; } /* bootstrap success */
+.username-feedback.invalid{ color: #b02a37; } /* bootstrap danger */
+
+/* Password toggle (eye icon inside input) */
+.password-toggle{ position: relative; }
+.password-toggle .toggle-btn{
+  position: absolute; right:10px; top:50%; transform:translateY(-50%);
+  background:transparent; border:none; padding:.25rem; cursor:pointer; color:rgba(34,51,65,0.7);
+}
+.password-toggle .toggle-btn:focus{ outline: none; box-shadow: none; }
+.password-toggle input[type="password"], .password-toggle input[type="text"]{ padding-right:2.6rem; }
+
+/* Toast / notification animations */
+@keyframes poda-slide-in {
+  from { transform: translateY(-10px) translateX(10px); opacity: 0; }
+  to   { transform: translateY(0) translateX(0); opacity: 1; }
+}
+
+.poda-toast { /* applied to toast elements for a subtle entrance */
+  animation: poda-slide-in 360ms cubic-bezier(.2,.8,.2,1);
+}
+
+.poda-toast .toast-header { background: #fff; border-bottom: 1px solid rgba(0,0,0,0.03); }
+.poda-toast .toast-body { color: #111827; }
+
+
+/* === General scrolling fix for all pages === */
+html, body {
+  height: auto;
+  overflow-y: auto;
+  background-color: #f8fafc;
+}
+
+/* === Dashboard-only styles === */
+body.dashboard-page {
+  background-color: #f8fafc;
+}
+
+/* Center section (professional style) */
+body.dashboard-page main.col-span-12.md\:col-span-6 {
+  background-color: #ffffff;
+  border-radius: 12px;
+  padding: 1rem 1.25rem;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+  overflow-y: auto;
+  max-height: calc(100vh - 100px);
+  scroll-behavior: smooth;
+}
+
+/* Post box / Create Post */
+body.dashboard-page main .mb-4.d-flex.gap-2 {
+  background-color: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  padding: 0.75rem 1rem;
+  position: sticky;
+  top: 0;
+  z-index: 5;
+}
+
+/* Individual Post Cards */
+body.dashboard-page main article.card {
+  border: none;
+  border-radius: 12px;
+  background-color: #ffffff;
+  margin-bottom: 1rem;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+body.dashboard-page main article.card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 16px rgba(0,0,0,0.08);
+}
+
+/* Author text */
+body.dashboard-page main article .card-title {
+  font-weight: 600;
+  color: #1e293b;
+}
+
+/* Post content */
+body.dashboard-page main article .text-break {
+  color: #334155;
+  line-height: 1.6;
+}
+
+/* Images inside posts */
+body.dashboard-page main article img.img-fluid.rounded {
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
+  transition: transform 0.2s ease-in-out;
+}
+body.dashboard-page main article img.img-fluid.rounded:hover {
+  transform: scale(1.02);
+}
+
+/* Comment section */
+body.dashboard-page main form[id^="comment-"] {
+  background: #f9fafb;
+  border-radius: 10px;
+  padding: 0.75rem;
+}
+body.dashboard-page main form textarea.form-control {
+  border-radius: 8px;
+}
+
+/* Scrollbar styling */
+body.dashboard-page main::-webkit-scrollbar {
+  width: 8px;
+}
+body.dashboard-page main::-webkit-scrollbar-thumb {
+  background-color: #cbd5e1;
+  border-radius: 10px;
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+  body.dashboard-page main.col-span-12.md\:col-span-6 {
+    max-height: none;
+  }
+}
+
+/* === Login page specific styles === */
+.login-card {
+  max-width: 520px;
+  width: 100%;
+  border-radius: 12px;
+  overflow: hidden;
+}
+.login-card .card-body { padding: 1.5rem; }
+.login-brand { display:flex; align-items:center; justify-content:center; gap:.75rem; margin-bottom:.5rem }
+.login-brand img { height:44px; border-radius:6px; }
+.login-helper { font-size:.92rem; color: #6b7280; margin-top:.35rem }
+.login-cta { padding-top:.5rem }
+
+/* Slightly larger input groups for the login card */
+.login-card .input-group-text { border-right:0; background:transparent }
+.login-card .form-control { border-radius:8px; padding:.6rem .75rem }
+
+@media (max-width: 480px) {
+  .login-card { margin: 0 1rem; }
+}

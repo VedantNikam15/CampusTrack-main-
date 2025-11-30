@@ -1,0 +1,180 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Profile • {{ profile_user.get_full_name|default:profile_user.username }}{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+
+  <!-- ===== HEADER / USER INFO ===== -->
+  <div class="bg-white rounded shadow-sm p-4 mb-4">
+    <div class="d-flex align-items-center">
+
+      <!-- Avatar -->
+      <div class="me-4">
+        {% if profile_user.role == 'student' and profile_user.student_profile.avatar %}
+          <img src="{{ profile_user.student_profile.avatar.url }}" class="rounded-circle" width="90" height="90">
+        {% elif profile_user.role == 'teacher' and profile_user.teacher_profile.avatar %}
+          <img src="{{ profile_user.teacher_profile.avatar.url }}" class="rounded-circle" width="90" height="90">
+        {% else %}
+          <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center"
+               style="width:90px;height:90px;font-size:2rem;">
+            {{ profile_user.username|slice:":1"|upper }}
+          </div>
+        {% endif %}
+      </div>
+
+      <!-- User Details -->
+      <div class="flex-grow-1">
+        <h2 class="fw-bold mb-1">{{ profile_user.get_full_name|default:profile_user.username }}</h2>
+
+        <div class="text-muted mb-2">
+          {{ profile_user.email }} · {{ profile_user.role|title }}
+          {% if profile_user.teacher_profile and profile_user.teacher_profile.designation %}
+            · {{ profile_user.teacher_profile.designation }}
+          {% endif %}
+        </div>
+
+        <!-- Badges -->
+        <div class="mb-1">
+          {% if profile_user.department %}
+            <span class="badge bg-info me-2 px-3 py-2">Dept: {{ profile_user.department }}</span>
+          {% endif %}
+          {% if profile_user.year %}
+            <span class="badge bg-secondary px-3 py-2">Year {{ profile_user.year }}</span>
+          {% endif %}
+          {% if profile_user.student_id %}
+            <span class="badge bg-dark">Student ID: {{ profile_user.student_id }}</span>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- Actions (Edit / Password) -->
+      {% if request.user.pk == profile_user.pk %}
+        <div class="text-end">
+          <a href="{% url 'core:edit_profile' %}" class="btn btn-outline-primary btn-sm mb-2">
+            <i class="bi bi-pencil-square me-1"></i>Edit Profile
+          </a><br>
+          <a href="{% url 'core:password_change' %}" class="btn btn-dark btn-sm">
+            <i class="bi bi-shield-lock me-1"></i>Change Password
+          </a>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- ===== SUMMARY CARDS ===== -->
+  <div class="row g-3 mb-4">
+    <div class="col-md-4">
+      <div class="card shadow-sm border-0 h-100">
+        <div class="card-body">
+          <div class="text-muted">Verified Certificates</div>
+          <div class="display-6 fw-bold">{{ certs|length }}</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-4">
+      <div class="card shadow-sm border-0 h-100">
+        <div class="card-body">
+          <div class="text-muted">Marks Entries</div>
+          <div class="display-6 fw-bold">{{ marks|length }}</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-4">
+      <div class="card shadow-sm border-0 h-100">
+        <div class="card-body">
+          <div class="text-muted">Member Since</div>
+          <div class="h3 fw-bold">{{ profile_user.date_joined|date:"M Y" }}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== CERTIFICATES + MARKS SECTION ===== -->
+  <div class="row g-4">
+
+    <!-- Certificates -->
+    <div class="col-lg-6">
+      <div class="card shadow-sm border-0">
+        <div class="card-header bg-success text-white fw-bold">Verified Certificates</div>
+        <div class="card-body">
+          {% if certs %}
+            <div class="table-responsive">
+              <table class="table table-hover">
+                <thead class="bg-light">
+                  <tr>
+                    <th>Title</th>
+                    <th>Uploaded</th>
+                    <th>Verified By</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for c in certs %}
+                    <tr>
+                      <td>{{ c.title }}</td>
+                      <td>{{ c.uploaded_at|date:"M d, Y" }}</td>
+                      <td>{{ c.verified_by.get_full_name|default:c.verified_by.username }}</td>
+                      <td>
+                        {% if c.file %}
+                          <a href="{{ c.file.url }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                            View
+                          </a>
+                        {% endif %}
+                      </td>
+                    </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          {% else %}
+            <div class="text-muted text-center py-4">No verified certificates yet.</div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Marks -->
+    <div class="col-lg-6">
+      <div class="card shadow-sm border-0">
+        <div class="card-header bg-primary text-white fw-bold">Marks</div>
+        <div class="card-body">
+          {% if marks %}
+            <div class="table-responsive">
+              <table class="table table-striped">
+                <thead class="bg-light">
+                  <tr>
+                    <th>Subject</th>
+                    <th>Marks</th>
+                    <th>Total</th>
+                    <th>%</th>
+                    <th>Date</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for m in marks %}
+                    <tr>
+                      <td>{{ m.subject }}</td>
+                      <td>{{ m.marks_obtained }}</td>
+                      <td>{{ m.total_marks }}</td>
+                      <td class="fw-bold">{{ m.percentage|floatformat:1 }}%</td>
+                      <td>{{ m.created_at|date:"M d, Y" }}</td>
+                    </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          {% else %}
+            <div class="text-center text-muted py-4">No marks recorded.</div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+</div>
+{% endblock %}
