@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: campustrack
+    env: python
+    plan: free
+    buildCommand: "pip install -r requirements.txt"
+    startCommand: "gunicorn campustrack.wsgi:application"
+    disk:
+      name: persistent_disk
+      mountPath: /var/data
+      sizeGB: 1
