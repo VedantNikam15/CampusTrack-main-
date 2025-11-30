@@ -32,17 +32,11 @@ INSTALLED_APPS = [
 ]
 
 # ----------------------------------------------------
-# Middleware
+# Middleware  (WhiteNoise ALWAYS included)
 # ----------------------------------------------------
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
-]
-
-# WhiteNoise ONLY on Render
-if IS_RENDER:
-    MIDDLEWARE.append("whitenoise.middleware.WhiteNoiseMiddleware")
-
-MIDDLEWARE += [
+    "whitenoise.middleware.WhiteNoiseMiddleware",   # FIX: Always include
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -75,7 +69,7 @@ TEMPLATES = [
 WSGI_APPLICATION = "campustrack.wsgi.application"
 
 # ----------------------------------------------------
-# DATABASE (SQLite for local + Render persistent disk)
+# DATABASE (SQLite local + Render persistent disk)
 # ----------------------------------------------------
 if IS_RENDER:
     DATABASES = {
@@ -108,15 +102,17 @@ USE_I18N = True
 USE_TZ = True
 
 # ----------------------------------------------------
-# STATIC FILES
+# STATIC FILES (Render + Local)
 # ----------------------------------------------------
 STATIC_URL = "/static/"
 
-STATIC_ROOT = BASE_DIR / "staticfiles"   # ALWAYS REQUIRED
+STATIC_ROOT = BASE_DIR / "staticfiles"   # MUST ALWAYS EXIST
 
-if not IS_RENDER:
+if DEBUG:
     STATICFILES_DIRS = [BASE_DIR / "static"]
-else:
+
+# WhiteNoise storage only on Render
+if IS_RENDER:
     STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
 MEDIA_URL = "/media/"
@@ -145,7 +141,6 @@ CRISPY_TEMPLATE_PACK = "bootstrap5"
 # Email
 # ----------------------------------------------------
 EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
-
 DEFAULT_FROM_EMAIL = "CampusTrack <no-reply@campus.com>"
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
