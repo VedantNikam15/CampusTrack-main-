@@ -6,6 +6,6 @@ services:
     buildCommand: "pip install -r requirements.txt"
     startCommand: "gunicorn campustrack.wsgi:application"
     disk:
-      name: persistent_disk
+      name: data
       mountPath: /var/data
       sizeGB: 1

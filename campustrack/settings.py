@@ -3,101 +3,149 @@ from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-SECRET_KEY = 'django-insecure-campustrack-dev-key'
-DEBUG = False
-ALLOWED_HOSTS = ['*']
+# ----------------------------------------------------
+# AUTO-SWITCH between LOCAL and RENDER
+# ----------------------------------------------------
+IS_RENDER = os.environ.get("RENDER") is not None
 
+DEBUG = not IS_RENDER     # Local = True, Render = False
+
+SECRET_KEY = os.environ.get("SECRET_KEY", "local-secret-key")
+
+ALLOWED_HOSTS = ["*"]
+
+# ----------------------------------------------------
+# Applications
+# ----------------------------------------------------
 INSTALLED_APPS = [
-    'django.contrib.admin',
-    'django.contrib.auth',
-    'django.contrib.contenttypes',
-    'django.contrib.sessions',
-    'django.contrib.messages',
-    'django.contrib.staticfiles',
-    'crispy_forms',
-    'crispy_bootstrap5',
-    'core',
+    "django.contrib.admin",
+    "django.contrib.auth",
+    "django.contrib.contenttypes",
+    "django.contrib.sessions",
+    "django.contrib.messages",
+    "django.contrib.staticfiles",
+
+    "crispy_forms",
+    "crispy_bootstrap5",
+
+    "core",
 ]
 
+# ----------------------------------------------------
+# Middleware
+# ----------------------------------------------------
 MIDDLEWARE = [
-    'django.middleware.security.SecurityMiddleware',
-    'whitenoise.middleware.WhiteNoiseMiddleware',      # ✔ RIGHT POSITION!
-    'django.contrib.sessions.middleware.SessionMiddleware',
-    'django.middleware.common.CommonMiddleware',
-    'django.middleware.csrf.CsrfViewMiddleware',
-    'django.contrib.auth.middleware.AuthenticationMiddleware',
-    'django.contrib.messages.middleware.MessageMiddleware',
-    'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    "django.middleware.security.SecurityMiddleware",
 ]
 
-ROOT_URLCONF = 'campustrack.urls'
+# WhiteNoise ONLY on Render
+if IS_RENDER:
+    MIDDLEWARE.append("whitenoise.middleware.WhiteNoiseMiddleware")
 
+MIDDLEWARE += [
+    "django.contrib.sessions.middleware.SessionMiddleware",
+    "django.middleware.common.CommonMiddleware",
+    "django.middleware.csrf.CsrfViewMiddleware",
+    "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "django.contrib.messages.middleware.MessageMiddleware",
+    "django.middleware.clickjacking.XFrameOptionsMiddleware",
+]
+
+ROOT_URLCONF = "campustrack.urls"
+
+# ----------------------------------------------------
+# Templates
+# ----------------------------------------------------
 TEMPLATES = [
     {
-        'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [BASE_DIR / 'templates'],
-        'APP_DIRS': True,
-        'OPTIONS': {
-            'context_processors': [
-                'django.template.context_processors.debug',
-                'django.template.context_processors.request',
-                'django.contrib.auth.context_processors.auth',
-                'django.contrib.messages.context_processors.messages',
+        "BACKEND": "django.template.backends.django.DjangoTemplates",
+        "DIRS": [BASE_DIR / "templates"],
+        "APP_DIRS": True,
+        "OPTIONS": {
+            "context_processors": [
+                "django.template.context_processors.debug",
+                "django.template.context_processors.request",
+                "django.contrib.auth.context_processors.auth",
+                "django.contrib.messages.context_processors.messages",
             ],
         },
     },
 ]
 
-WSGI_APPLICATION = 'campustrack.wsgi.application'
-ASGI_APPLICATION = 'campustrack.asgi.application'
+WSGI_APPLICATION = "campustrack.wsgi.application"
 
-
-# ===========================
-# DATABASE — required for Render disk
-# ===========================
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': '/var/data/db.sqlite3',   # ✔ persistent storage on Render
+# ----------------------------------------------------
+# DATABASE (SQLite for local + Render persistent disk)
+# ----------------------------------------------------
+if IS_RENDER:
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.sqlite3",
+            "NAME": "/var/data/db.sqlite3",
+        }
     }
-}
+else:
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.sqlite3",
+            "NAME": BASE_DIR / "db.sqlite3",
+        }
+    }
 
-
-# ===========================
-# STATIC FILES — CRITICAL
-# ===========================
-STATIC_URL = '/static/'
-STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')  # ✔ collectstatic output
-
-STATICFILES_DIRS = [
-    os.path.join(BASE_DIR, 'static'),   # ✔ your custom static folder
+# ----------------------------------------------------
+# Password Validators
+# ----------------------------------------------------
+AUTH_PASSWORD_VALIDATORS = [
+    {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
+    {"NAME": "django.contrib.auth.password_validation.MinimumLengthValidator"},
+    {"NAME": "django.contrib.auth.password_validation.CommonPasswordValidator"},
+    {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator"},
 ]
 
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+LANGUAGE_CODE = "en-us"
+TIME_ZONE = "Asia/Kolkata"
+USE_I18N = True
+USE_TZ = True
 
+# ----------------------------------------------------
+# STATIC FILES
+# ----------------------------------------------------
+STATIC_URL = "/static/"
 
-# ===========================
-# MEDIA FILES
-# ===========================
-MEDIA_URL = '/media/'
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+STATIC_ROOT = BASE_DIR / "staticfiles"   # ALWAYS REQUIRED
 
+if not IS_RENDER:
+    STATICFILES_DIRS = [BASE_DIR / "static"]
+else:
+    STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
-# ===========================
-# EMAIL — Turn OFF SMTP for now to avoid 500 errors
-# ===========================
-EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+MEDIA_URL = "/media/"
+MEDIA_ROOT = BASE_DIR / "media"
 
+# ----------------------------------------------------
+# Authentication
+# ----------------------------------------------------
+AUTH_USER_MODEL = "core.User"
+LOGIN_URL = "login"
+LOGIN_REDIRECT_URL = "dashboard"
+LOGOUT_REDIRECT_URL = "login"
 
-# ===========================
-# AUTH
-# ===========================
-AUTH_USER_MODEL = 'core.User'
-LOGIN_URL = 'login'
-LOGIN_REDIRECT_URL = 'dashboard'
-LOGOUT_REDIRECT_URL = 'login'
+AUTHENTICATION_BACKENDS = [
+    "core.backends.EmailOrUsernameModelBackend",
+    "django.contrib.auth.backends.ModelBackend",
+]
 
-CRISPY_ALLOWED_TEMPLATE_PACKS = 'bootstrap5'
-CRISPY_TEMPLATE_PACK = 'bootstrap5'
+# ----------------------------------------------------
+# Crispy Forms
+# ----------------------------------------------------
+CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap5"
+CRISPY_TEMPLATE_PACK = "bootstrap5"
 
-DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+# ----------------------------------------------------
+# Email
+# ----------------------------------------------------
+EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+
+DEFAULT_FROM_EMAIL = "CampusTrack <no-reply@campus.com>"
+
+DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
